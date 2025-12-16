@@ -3,13 +3,17 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
+// 1. Halaman Depan (Landing Page)
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('landing');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// 2. Halaman Peta (Untuk User Mencari Tambal Ban)
+Route::get('/peta', function () {
+    // Load relasi reviews agar bisa dihitung ratingnya
+    $lokasi = \App\Models\TambalBan::with('reviews')->get();
+    return view('peta', compact('lokasi'));
+})->name('peta.index');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
