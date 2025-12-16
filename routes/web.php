@@ -1,9 +1,15 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\OrderController;
 use App\Http\Controllers\TambalBanController;
+use App\Models\TambalBan;
+use App\Http\Controllers\OrderController;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
 
 // 1. Halaman Depan (Landing Page)
 Route::get('/', function () {
@@ -27,9 +33,9 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified']);
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
     // Form Booking
     Route::get('/booking/{id}', [App\Http\Controllers\OrderController::class, 'create'])->name('booking.create');
     Route::post('/booking', [App\Http\Controllers\OrderController::class, 'store'])->name('booking.store');
@@ -69,3 +75,5 @@ Route::middleware(['auth'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+Route::post('/review', [App\Http\Controllers\ReviewController::class, 'store'])->middleware('auth')->name('review.store');
