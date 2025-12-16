@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\TambalBanController;
 
 // 1. Halaman Depan (Landing Page)
 Route::get('/', function () {
@@ -15,10 +17,35 @@ Route::get('/peta', function () {
     return view('peta', compact('lokasi'));
 })->name('peta.index');
 
+// 3. Route Default Breeze (Dashboard, Profile, dll)
+Route::get('/dashboard', function () {
+    // Redirect user biasa ke halaman peta saja, Admin ke dashboard admin
+    if (auth()->user()->role === 'admin') {
+        return redirect()->route('dashboard'); // Nama route dashboard admin
+    }
+    return redirect('/');
+})->middleware(['auth', 'verified']);
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Form Booking
+    Route::get('/booking/{id}', [App\Http\Controllers\OrderController::class, 'create'])->name('booking.create');
+    Route::post('/booking', [App\Http\Controllers\OrderController::class, 'store'])->name('booking.store');
+    // Riwayat Booking
+    Route::get('/riwayat-pesanan', [App\Http\Controllers\OrderController::class, 'history'])->name('booking.history');
+    Route::get('/booking/{id}/detail', [App\Http\Controllers\OrderController::class, 'show'])->name('booking.show');
+    Route::patch('/booking/{id}/cancel', [App\Http\Controllers\OrderController::class, 'cancelOrder'])->name('booking.cancel');
+});
+
+// 4. Group Route Khusus Admin
+Route::middleware(['auth', 'isAdmin'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', [TambalBanController::class, 'index'])->name('dashboard');
+    Route::get('/live-map', [TambalBanController::class, 'liveMap'])->name('admin.map');
+    Route::resource('tambal-ban', TambalBanController::class);
+    Route::get('/orders', [OrderController::class, 'adminIndex'])->name('admin.orders.index');
+    Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.update');
 });
 
 require __DIR__.'/auth.php';
