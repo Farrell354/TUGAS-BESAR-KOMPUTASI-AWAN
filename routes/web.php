@@ -48,4 +48,24 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->group(function () {
     Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.update');
 });
 
+// ROUTE GROUP OWNER
+Route::middleware(['auth', 'isOwner'])->prefix('owner')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\OwnerController::class, 'index'])->name('owner.dashboard');
+    Route::post('/order/{id}/update', [App\Http\Controllers\OwnerController::class, 'updateStatus'])->name('owner.order.update');
+    Route::middleware(['auth', 'isOwner'])->prefix('owner')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\OwnerController::class, 'index'])->name('owner.dashboard');
+    Route::post('/order/{id}/update', [App\Http\Controllers\OwnerController::class, 'updateStatus'])->name('owner.order.update');
+    Route::get('/order/{id}', [App\Http\Controllers\OwnerController::class, 'show'])->name('owner.order.show');
+    Route::get('/orders/{id}', [OrderController::class, 'adminShow'])->name('admin.orders.show');
+    Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.update');
+});
+});
+
+// ROUTE CHAT (Bisa diakses User & Owner)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/chat/{order_id}', [App\Http\Controllers\ChatController::class, 'show'])->name('chat.show');
+    Route::post('/chat/{order_id}/send', [App\Http\Controllers\ChatController::class, 'send'])->name('chat.send');
+    Route::get('/chat/{order_id}/get', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.get');
+});
+
 require __DIR__.'/auth.php';
