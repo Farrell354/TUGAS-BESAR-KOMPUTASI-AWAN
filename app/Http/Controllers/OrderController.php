@@ -6,11 +6,12 @@ use Illuminate\Http\Request;
 use App\Models\TambalBan;
 use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage; // Penting untuk Foto
 
 // --- LIBRARY MIDTRANS ---
 use Midtrans\Config;
 use Midtrans\Snap;
-use Midtrans\Transaction; // <--- Wajib ada untuk Cek Status
+use Midtrans\Transaction; 
 
 class OrderController extends Controller
 {
@@ -21,22 +22,24 @@ class OrderController extends Controller
         return view('booking.create', compact('bengkel'));
     }
 
-    // 2. Simpan Pesanan (Logika Jarak, Harga, & Midtrans)
+    // 2. Simpan Pesanan (Logika Jarak, Harga Dinamis, Foto & Midtrans)
     public function store(Request $request)
     {
         // A. Validasi Input
         $request->validate([
-            'tambal_ban_id' => 'required',
-            'nama_pemesan' => 'required',
-            'nomer_telepon' => 'required',
-            'alamat_lengkap' => 'required',
-            'jenis_kendaraan' => 'required',
-            'latitude' => 'required',
-            'longitude' => 'required',
-            'metode_pembayaran' => 'required|in:cod,transfer', 
+            'tambal_ban_id'     => 'required',
+            'nama_pemesan'      => 'required',
+            'nomer_telepon'     => 'required',
+            'alamat_lengkap'    => 'required',
+            'jenis_kendaraan'   => 'required|in:motor,mobil',
+            'latitude'          => 'required',
+            'longitude'         => 'required',
+            'metode_pembayaran' => 'required|in:cod,transfer',
+            // Validasi Foto (Maks 5MB)
+            'foto_ban'          => 'nullable|image|mimes:jpeg,png,jpg|max:5120', 
         ]);
 
-        // B. Hitung Jarak & Harga
+        // B. Hitung Jarak
         $bengkel = TambalBan::findOrFail($request->tambal_ban_id);
         
         $jarak_km = $this->calculateDistance(
@@ -46,58 +49,67 @@ class OrderController extends Controller
             $bengkel->longitude
         );
 
-        $biaya_jasa = 0;
-
+        // Cek Jarak Maksimal
         if ($jarak_km > 10) {
             return back()->with('error', 'Maaf, lokasi Anda terlalu jauh (' . number_format($jarak_km, 1) . ' km). Maksimal 10 km.');
         }
 
-       if ($request->jenis_kendaraan == 'mobil') {
+        // C. Tentukan Harga Dinamis (Dari Database Bengkel)
+        $biaya_jasa = 0;
+
+        if ($request->jenis_kendaraan == 'mobil') {
             // --- HARGA MOBIL ---
-            if ($jarak_km <= 5) {
-                $biaya_jasa = $bengkel->harga_mobil_dekat; 
-            } else {
-                $biaya_jasa = $bengkel->harga_mobil_jauh; 
-            }
+            // Jika data harga di DB null/0, gunakan default 35rb/50rb (Fallback)
+            $hargaDekat = $bengkel->harga_mobil_dekat ?? 35000;
+            $hargaJauh  = $bengkel->harga_mobil_jauh ?? 50000;
+
+            $biaya_jasa = ($jarak_km <= 5) ? $hargaDekat : $hargaJauh;
+
         } else {
             // --- HARGA MOTOR ---
-            if ($jarak_km <= 5) {
-                $biaya_jasa = $bengkel->harga_motor_dekat; 
-            } else {
-                $biaya_jasa = $bengkel->harga_motor_jauh; 
-            }
+            // Jika data harga di DB null/0, gunakan default 20rb/35rb (Fallback)
+            $hargaDekat = $bengkel->harga_motor_dekat ?? 20000;
+            $hargaJauh  = $bengkel->harga_motor_jauh ?? 35000;
+
+            $biaya_jasa = ($jarak_km <= 5) ? $hargaDekat : $hargaJauh;
         }
 
-        // C. Simpan ke Database
-        // Gunakan time() agar Kode Order unik dan tidak bentrok di Midtrans
+        // D. Upload Foto (Jika Ada)
+        $pathFoto = null;
+        if ($request->hasFile('foto_ban')) {
+            $pathFoto = $request->file('foto_ban')->store('order_images', 'public');
+        }
+
+        // E. Simpan ke Database
+        // Gunakan time() agar Kode Order unik
         $kodeUnik = 'TRX-' . time() . rand(100, 999);
 
         $order = Order::create([
-            'kode_order' => $kodeUnik,
-            'user_id' => Auth::id(),
-            'tambal_ban_id' => $request->tambal_ban_id,
-            'nama_pemesan' => $request->nama_pemesan,
-            'nomer_telepon' => $request->nomer_telepon,
-            'alamat_lengkap' => $request->alamat_lengkap,
-            'jenis_kendaraan' => $request->jenis_kendaraan,
-            'keluhan' => $request->keluhan,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-            'status' => 'pending',
+            'kode_order'        => $kodeUnik,
+            'user_id'           => Auth::id(),
+            'tambal_ban_id'     => $request->tambal_ban_id,
+            'nama_pemesan'      => $request->nama_pemesan,
+            'nomer_telepon'     => $request->nomer_telepon,
+            'alamat_lengkap'    => $request->alamat_lengkap,
+            'jenis_kendaraan'   => $request->jenis_kendaraan,
+            'keluhan'           => $request->keluhan,
+            'foto_ban'          => $pathFoto, // Simpan path foto
+            'latitude'          => $request->latitude,
+            'longitude'         => $request->longitude,
+            'status'            => 'pending',
             'metode_pembayaran' => $request->metode_pembayaran,
-            'total_harga' => $biaya_jasa,
-            'payment_status' => 'unpaid',
+            'total_harga'       => $biaya_jasa,
+            'payment_status'    => 'unpaid',
         ]);
 
-        // D. Request Token ke Midtrans (Jika Transfer)
+        // F. Request Token ke Midtrans (Jika Transfer)
         if ($request->metode_pembayaran == 'transfer') {
             
-            // Konfigurasi Midtrans
             $this->configureMidtrans();
 
             $params = [
                 'transaction_details' => [
-                    'order_id' => $order->id, // ID Database kita
+                    'order_id' => $order->id, // Gunakan ID Order
                     'gross_amount' => (int) $order->total_harga,
                 ],
                 'customer_details' => [
@@ -119,60 +131,39 @@ class OrderController extends Controller
             ->with('success', 'Pesanan dibuat! Estimasi Jarak: ' . number_format($jarak_km, 1) . ' km');
     }
 
-    // 3. Detail Pesanan User (DENGAN FITUR AUTO-CHECK LOCALHOST)
+    // 3. Detail Pesanan User (DENGAN AUTO-UPDATE LOCALHOST)
     public function show($id)
     {
         $order = Order::with('tambalBan')->findOrFail($id);
 
-        // Keamanan: Pastikan user yang login adalah pemilik pesanan
         if ($order->user_id !== Auth::id()) {
             abort(403, 'Akses Ditolak');
         }
 
-        // --- MAGIS: AUTO-UPDATE STATUS UTK LOCALHOST ---
+        // --- CEK STATUS MIDTRANS (Solusi Localhost) ---
         if ($order->metode_pembayaran == 'transfer' && $order->payment_status == 'unpaid') {
-            $this->configureMidtrans(); // Load config
-            try {
-                // Cek status langsung ke server Midtrans
-                $status = Transaction::status($order->id); 
-                
-                // Jika status di Midtrans sudah sukses, update database kita
-                if ($status->transaction_status == 'settlement' || $status->transaction_status == 'capture') {
-                    $order->update(['payment_status' => 'paid']);
-                } else if ($status->transaction_status == 'expire') {
-                    $order->update(['payment_status' => 'expired']);
-                } else if ($status->transaction_status == 'cancel') {
-                    $order->update(['payment_status' => 'failed']);
-                }
-            } catch (\Exception $e) {
-            }
+            $this->checkMidtransStatus($order);
         }
-
+        // ---------------------------------------------
 
         return view('booking.show', compact('order'));
     }
 
-    // 4. Admin/Owner: Detail Pesanan (Juga dikasih Auto-Check biar Owner update real-time)
+    // 4. Detail Pesanan Admin/Owner (DENGAN AUTO-UPDATE)
     public function adminShow($id)
     {
         $order = Order::with(['user', 'tambalBan.owner'])->findOrFail($id);
 
-        // --- AUTO-UPDATE STATUS UTK OWNER JUGA ---
+        // --- CEK STATUS MIDTRANS UTK OWNER ---
         if ($order->metode_pembayaran == 'transfer' && $order->payment_status == 'unpaid') {
-            $this->configureMidtrans();
-            try {
-                $status = Transaction::status($order->id);
-                if ($status->transaction_status == 'settlement' || $status->transaction_status == 'capture') {
-                    $order->update(['payment_status' => 'paid']);
-                }
-            } catch (\Exception $e) {}
+            $this->checkMidtransStatus($order);
         }
-        // -----------------------------------------
+        // -------------------------------------
 
-        return view('admin.orders.show', compact('order')); // Sesuaikan jika view owner beda folder
+        return view('admin.orders.show', compact('order'));
     }
 
-    // 5. Riwayat Pesanan
+    // 5. Riwayat Pesanan User
     public function history()
     {
         $orders = Order::where('user_id', Auth::id())
@@ -183,7 +174,7 @@ class OrderController extends Controller
         return view('booking.history', compact('orders'));
     }
 
-    // 6. Admin Index
+    // 6. List Pesanan Admin
     public function adminIndex()
     {
         $orders = Order::with(['user', 'tambalBan'])->latest()->get();
@@ -195,23 +186,21 @@ class OrderController extends Controller
     {
         $order = Order::findOrFail($id);
         
-        // Logika Update
         if ($request->has('action')) {
-            // Logic khusus untuk tombol Terima/Tolak Owner
+            // Logic Tombol Cepat (Owner)
             if ($request->action == 'accept') {
                 $order->update(['status' => 'proses']);
             } elseif ($request->action == 'reject') {
                 $order->update(['status' => 'batal', 'alasan_batal' => $request->alasan ?? 'Ditolak Bengkel']);
             } elseif ($request->action == 'finish') {
                 $order->update(['status' => 'selesai']);
-                
                 // Jika COD, otomatis set Lunas saat selesai
                 if($order->metode_pembayaran == 'cod') {
                     $order->update(['payment_status' => 'paid']);
                 }
             }
         } else {
-            // Logic standard update status via select/dropdown
+            // Logic Dropdown Admin
             $data = ['status' => $request->status];
             if ($request->status == 'batal' && $request->alasan_batal) {
                 $data['alasan_batal'] = $request->alasan_batal;
@@ -222,7 +211,7 @@ class OrderController extends Controller
         return back()->with('success', 'Status pesanan diperbarui.');
     }
 
-    // 8. User Cancel
+    // 8. User Cancel Pesanan
     public function cancelOrder($id)
     {
         $order = Order::where('user_id', Auth::id())->findOrFail($id);
@@ -245,7 +234,26 @@ class OrderController extends Controller
         Config::$is3ds = config('midtrans.is_3ds');
     }
 
-    // Hitung Jarak (Haversine)
+    // Logika Cek Status Midtrans (Reusable)
+    private function checkMidtransStatus($order) {
+        $this->configureMidtrans();
+        try {
+            // Cek ke server Midtrans
+            $status = Transaction::status($order->id); 
+            
+            if ($status->transaction_status == 'settlement' || $status->transaction_status == 'capture') {
+                $order->update(['payment_status' => 'paid']);
+            } else if ($status->transaction_status == 'expire') {
+                $order->update(['payment_status' => 'expired']);
+            } else if ($status->transaction_status == 'cancel') {
+                $order->update(['payment_status' => 'failed']);
+            }
+        } catch (\Exception $e) {
+            // Abaikan error jika transaksi belum dibayar sama sekali
+        }
+    }
+
+    // Hitung Jarak (Haversine Formula)
     private function calculateDistance($lat1, $lon1, $lat2, $lon2) {
         $earthRadius = 6371; 
         $dLat = deg2rad($lat2 - $lat1);

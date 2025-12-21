@@ -9,14 +9,24 @@ class Order extends Model
 {
     use HasFactory;
 
-protected $fillable = [
-        'user_id', 'tambal_ban_id', 'nama_pemesan',
-        'nomer_telepon', 'alamat_lengkap', 'jenis_kendaraan',
-        'keluhan', 'status', 'alasan_batal',
-        'latitude', 'longitude', 'total_harga',
+    protected $fillable = [
+        'user_id',
+        'tambal_ban_id',
+        'nama_pemesan',
+        'nomer_telepon',
+        'alamat_lengkap',
+        'jenis_kendaraan',
+        'keluhan',
+        'status',
+        'alasan_batal',
+        'latitude',
+        'longitude',
+        'total_harga',
         'metode_pembayaran',
         'payment_status',
-        'snap_token'
+        'snap_token',
+        'keluhan',
+        'foto_ban',
     ];
 
     public function tambalBan()
@@ -30,7 +40,7 @@ protected $fillable = [
     }
 
     public function chats()
-{
-    return $this->hasMany(Chat::class);
-}
+    {
+        return $this->hasMany(Chat::class);
+    }
 }
