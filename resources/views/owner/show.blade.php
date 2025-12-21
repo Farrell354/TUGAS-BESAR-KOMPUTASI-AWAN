@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center gap-4">
-            <a href="{{ route('owner.dashboard') }}" class="bg-white border border-gray-300 h-10 w-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-50 transition">
+            <a href="{{ route('owner.dashboard') }}" class="bg-white border border-gray-300 h-10 w-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-50 transition shadow-sm">
                 <i class="fa-solid fa-arrow-left"></i>
             </a>
             <h2 class="font-bold text-xl text-gray-800">Detail Pesanan #{{ $order->kode_order ?? $order->id }}</h2>
@@ -117,7 +117,7 @@
                                         <p class="text-xs text-green-700 font-bold uppercase tracking-wider mb-1">Metode Pembayaran</p>
                                         <h3 class="text-xl font-extrabold text-gray-800">TUNAI (COD)</h3>
                                         <p class="text-sm text-gray-600 mt-1">
-                                            Tagih sebesar <strong>Rp {{ number_format($order->total_harga) }}</strong> ke pelanggan.
+                                            Silakan tagih sebesar <strong>Rp {{ number_format($order->total_harga) }}</strong> ke pelanggan.
                                         </p>
                                     </div>
                                 </div>
@@ -159,6 +159,7 @@
                             <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Tindakan Anda</h4>
 
                             @if($order->status == 'pending')
+                                
                                 <div class="grid grid-cols-2 gap-3">
                                     <form action="{{ route('owner.order.update', $order->id) }}" method="POST">
                                         @csrf
@@ -172,6 +173,17 @@
                                     </button>
                                 </div>
 
+                                @if($order->metode_pembayaran == 'transfer' && $order->payment_status == 'paid')
+                                    <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 animate-pulse">
+                                        <i class="fa-solid fa-triangle-exclamation text-red-600 mt-0.5"></i>
+                                        <div>
+                                            <p class="text-xs text-red-800 font-bold">PERINGATAN:</p>
+                                            <p class="text-[10px] text-red-700">
+                                                Pesanan ini <strong class="underline">SUDAH LUNAS</strong>. Jika Anda menolak, harap segera laporkan ke Admin agar dana pelanggan dapat dikembalikan (Refund).
+                                            </p>
+                                        </div>
+                                    </div>
+                                @endif
                                 <form id="rejectForm" action="{{ route('owner.order.update', $order->id) }}" method="POST" class="hidden">
                                     @csrf
                                     <input type="hidden" name="action" value="reject">
@@ -191,6 +203,14 @@
                                         </button>
                                     </form>
                                 </div>
+
+                            @else
+                                <div class="text-center p-4 bg-gray-100 rounded-xl text-gray-500 text-sm border border-gray-200">
+                                    <i class="fa-solid fa-lock mr-1"></i> Pesanan ini telah selesai atau dibatalkan.
+                                    @if($order->status == 'batal' && $order->alasan_batal)
+                                        <p class="text-xs text-red-500 mt-1">Alasan: {{ $order->alasan_batal }}</p>
+                                    @endif
+                                </div>
                             @endif
                         </div>
 
@@ -206,7 +226,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // Script Tolak Pesanan
+        // 1. Script Tolak Pesanan
         function rejectOrder() {
             Swal.fire({
                 title: 'Tolak Pesanan?',
@@ -226,7 +246,9 @@
                 cancelButtonColor: '#6b7280',
                 confirmButtonText: 'Tolak Pesanan',
                 inputValidator: (value) => {
-                    if (!value) { return 'Anda harus memilih alasan!' }
+                    if (!value) {
+                        return 'Anda harus memilih alasan!'
+                    }
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
@@ -236,7 +258,7 @@
             });
         }
 
-        // Script Selesai Pesanan
+        // 2. Script Selesai Pesanan
         function confirmFinish() {
             Swal.fire({
                 title: 'Selesaikan Pesanan?',
@@ -260,7 +282,7 @@
             });
         }
 
-        // Script Peta
+        // 3. Script Peta
         @if($order->latitude && $order->longitude)
         document.addEventListener("DOMContentLoaded", function() {
             var lat = {{ $order->latitude }};
