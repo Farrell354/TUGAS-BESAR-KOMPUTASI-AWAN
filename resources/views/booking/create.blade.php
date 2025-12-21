@@ -28,7 +28,6 @@
 
                     <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
                         <label class="block text-sm font-bold text-gray-700 mb-2">1. Tentukan Lokasi Anda (Wajib)</label>
-                        
                         <div id="mapPicker" class="w-full h-56 rounded-lg border border-gray-300 z-0 relative"></div>
                         
                         <div class="flex justify-between items-center mt-3">
@@ -62,21 +61,18 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-gray-500 mb-1">Nama Pemesan</label>
-                                <input type="text" name="nama_pemesan" value="{{ Auth::user()->name }}"
-                                    class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm" required>
+                                <input type="text" name="nama_pemesan" value="{{ Auth::user()->name }}" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm" required>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-500 mb-1">No. WhatsApp</label>
-                                <input type="number" name="nomer_telepon" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                    placeholder="08..." required>
+                                <input type="number" name="nomer_telepon" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="08..." required>
                             </div>
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1">Detail Alamat / Patokan</label>
-                        <textarea name="alamat_lengkap" rows="2" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            placeholder="Contoh: Depan pagar hitam, sebelah warung..." required></textarea>
+                        <textarea name="alamat_lengkap" rows="2" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Contoh: Depan pagar hitam, sebelah warung..." required></textarea>
                     </div>
 
                     <div>
@@ -91,13 +87,11 @@
                                 <span><i class="fa-solid fa-car text-gray-600 mr-1"></i> Mobil</span>
                             </label>
                         </div>
-                        <p class="text-[10px] text-gray-400 mt-1">*Harga jasa berbeda untuk Motor dan Mobil.</p>
                     </div>
 
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1">Keluhan</label>
-                        <input type="text" name="keluhan" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm mb-3"
-                            placeholder="Contoh: Bocor halus, ban robek, kena paku">
+                        <input type="text" name="keluhan" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm mb-3" placeholder="Contoh: Bocor halus, ban robek, kena paku">
                         
                         <label class="block text-xs font-medium text-gray-500 mb-2">Foto Kondisi Ban (Opsional)</label>
                         <div class="flex items-center justify-center w-full">
@@ -105,20 +99,10 @@
                                 <div class="flex flex-col items-center justify-center pt-5 pb-6" id="uploadPlaceholder">
                                     <i class="fa-solid fa-camera text-blue-500 text-3xl mb-2 drop-shadow-sm"></i>
                                     <p class="text-sm text-gray-600 font-bold">Ambil Foto Ban</p>
-                                    <p class="text-[10px] text-gray-400">Jepret langsung (Kamera) atau pilih Galeri</p>
+                                    <p class="text-[10px] text-gray-400">Jepret langsung atau pilih Galeri</p>
                                 </div>
                                 <img id="imgPreview" class="hidden absolute inset-0 w-full h-full object-cover">
-                                
-                                <input 
-                                    id="foto_ban" 
-                                    name="foto_ban" 
-                                    type="file" 
-                                    class="hidden" 
-                                    accept="image/*" 
-                                    capture="environment" 
-                                    onchange="previewImage(event)" 
-                                />
-                                
+                                <input id="foto_ban" name="foto_ban" type="file" class="hidden" accept="image/*" capture="environment" onchange="previewImage(event)" />
                                 <button type="button" id="removeBtn" onclick="removeImage()" class="hidden absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 items-center justify-center text-xs shadow-md z-10 hover:bg-red-600">
                                     <i class="fa-solid fa-times"></i>
                                 </button>
@@ -132,7 +116,7 @@
 
                             <label class="relative flex items-center justify-between p-4 bg-white border-2 border-gray-200 rounded-xl cursor-pointer shadow-sm transition hover:border-blue-300 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
                                 <div class="flex items-center gap-3">
-                                    <input type="radio" name="metode_pembayaran" value="cod" class="w-5 h-5 text-blue-600 focus:ring-blue-500" checked>
+                                    <input type="radio" name="metode_pembayaran" value="cod" class="w-5 h-5 text-blue-600 focus:ring-blue-500" checked onchange="toggleRefundWarning(false)">
                                     <div>
                                         <span class="block text-sm font-bold text-gray-800">Tunai (COD)</span>
                                         <span class="block text-[10px] text-gray-500">Bayar tunai ke mekanik</span>
@@ -143,7 +127,7 @@
 
                             <label class="relative flex items-center justify-between p-4 bg-white border-2 border-gray-200 rounded-xl cursor-pointer shadow-sm transition hover:border-blue-300 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
                                 <div class="flex items-center gap-3">
-                                    <input type="radio" name="metode_pembayaran" value="transfer" class="w-5 h-5 text-blue-600 focus:ring-blue-500">
+                                    <input type="radio" name="metode_pembayaran" value="transfer" class="w-5 h-5 text-blue-600 focus:ring-blue-500" onchange="toggleRefundWarning(true)">
                                     <div>
                                         <span class="block text-sm font-bold text-gray-800">Transfer / E-Wallet</span>
                                         <span class="block text-[10px] text-gray-500">QRIS, Gopay, VA Bank</span>
@@ -151,9 +135,19 @@
                                 </div>
                                 <i class="fa-regular fa-credit-card text-blue-600 text-xl"></i>
                             </label>
-
                         </div>
-                    </div>
+
+                        <div id="refundWarning" class="hidden mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-start gap-3">
+                            <i class="fa-solid fa-triangle-exclamation text-yellow-600 text-lg mt-0.5"></i>
+                            <div>
+                                <p class="text-xs font-bold text-yellow-800 uppercase mb-1">Perhatian (Kebijakan Refund)</p>
+                                <p class="text-xs text-yellow-700 leading-relaxed">
+                                    Dana transfer akan masuk ke Rekening Bersama Admin. Jika pesanan dibatalkan (oleh Anda/Bengkel), 
+                                    pengembalian dana akan diproses manual dalam <strong>1x24 Jam</strong> (dikurangi biaya admin).
+                                </p>
+                            </div>
+                        </div>
+                        </div>
 
                     <div class="pt-6 mt-2">
                         <button type="submit" id="submitBtn" disabled
@@ -174,22 +168,13 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script>
-        // --- 1. CONFIG DATA BENGKEL & HARGA ---
         var bengkelLat = {{ $bengkel->latitude }};
         var bengkelLng = {{ $bengkel->longitude }};
-        
         var rates = {
-            motor: {
-                dekat: {{ $bengkel->harga_motor_dekat }}, 
-                jauh: {{ $bengkel->harga_motor_jauh }}
-            },
-            mobil: {
-                dekat: {{ $bengkel->harga_mobil_dekat }},
-                jauh: {{ $bengkel->harga_mobil_jauh }}
-            }
+            motor: { dekat: {{ $bengkel->harga_motor_dekat }}, jauh: {{ $bengkel->harga_motor_jauh }} },
+            mobil: { dekat: {{ $bengkel->harga_mobil_dekat }}, jauh: {{ $bengkel->harga_mobil_jauh }} }
         };
         
-        // --- 2. MAP INIT ---
         var map = L.map('mapPicker').setView([bengkelLat, bengkelLng], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
 
@@ -200,11 +185,19 @@
         var currentLat = 0;
         var currentLng = 0;
 
-        // --- 3. LOGIKA PREVIEW GAMBAR ---
+        // FUNGSI BARU: TOGGLE PERINGATAN REFUND
+        function toggleRefundWarning(show) {
+            const box = document.getElementById('refundWarning');
+            if(show) {
+                box.classList.remove('hidden');
+            } else {
+                box.classList.add('hidden');
+            }
+        }
+
         function previewImage(event) {
             var input = event.target;
             var reader = new FileReader();
-            
             reader.onload = function(){
                 var img = document.getElementById('imgPreview');
                 img.src = reader.result;
@@ -213,10 +206,7 @@
                 document.getElementById('removeBtn').classList.remove('hidden');
                 document.getElementById('removeBtn').classList.add('flex');
             };
-            
-            if(input.files[0]) {
-                reader.readAsDataURL(input.files[0]);
-            }
+            if(input.files[0]) { reader.readAsDataURL(input.files[0]); }
         }
 
         function removeImage() {
@@ -228,30 +218,24 @@
             document.getElementById('removeBtn').classList.remove('flex');
         }
 
-        // --- 4. RUMUS JARAK ---
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
             var R = 6371; 
             var dLat = deg2rad(lat2 - lat1);
             var dLon = deg2rad(lon2 - lon1);
-            var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
             var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             return R * c;
         }
         function deg2rad(deg) { return deg * (Math.PI / 180); }
 
-        // --- 5. UPDATE HARGA ---
         function updatePriceUI() {
             if(currentLat == 0 || currentLng == 0) return;
-
             var dist = getDistanceFromLatLonInKm(currentLat, currentLng, bengkelLat, bengkelLng);
             var price = 0;
             var vehicleType = document.querySelector('input[name="jenis_kendaraan"]:checked').value;
 
             document.getElementById('priceInfo').classList.remove('hidden');
             document.getElementById('distanceDisplay').innerText = dist.toFixed(1) + " km";
-            
             var submitBtn = document.getElementById('submitBtn');
             var warningBox = document.getElementById('distanceWarning');
             var priceDisplay = document.getElementById('priceDisplay');
@@ -264,15 +248,11 @@
                 submitBtn.innerHTML = '<i class="fa-solid fa-ban"></i> Jarak Terlalu Jauh';
             } else {
                 warningBox.classList.add('hidden');
-                
                 if(vehicleType === 'mobil') {
-                    if (dist <= 5) price = rates.mobil.dekat;
-                    else price = rates.mobil.jauh;
+                    if (dist <= 5) price = rates.mobil.dekat; else price = rates.mobil.jauh;
                 } else {
-                    if (dist <= 5) price = rates.motor.dekat;
-                    else price = rates.motor.jauh;
+                    if (dist <= 5) price = rates.motor.dekat; else price = rates.motor.jauh;
                 }
-                
                 priceDisplay.innerText = "Rp " + price.toLocaleString('id-ID');
                 submitBtn.disabled = false;
                 submitBtn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 flex justify-center items-center gap-2";
@@ -280,15 +260,12 @@
             }
         }
 
-        // --- 6. UPDATE POSISI ---
         function updatePosition(lat, lng) {
             currentLat = lat;
             currentLng = lng;
             document.getElementById('latitude').value = lat;
             document.getElementById('longitude').value = lng;
-            
             updatePriceUI(); 
-
             if (userMarker) {
                 userMarker.setLatLng([lat, lng]);
             } else {
@@ -306,7 +283,6 @@
             var btn = document.querySelector('button[onclick="getLocation()"]');
             var oldText = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mencari...';
-
             navigator.geolocation.getCurrentPosition((pos) => {
                 updatePosition(pos.coords.latitude, pos.coords.longitude);
                 map.setView([pos.coords.latitude, pos.coords.longitude], 15);
@@ -314,13 +290,10 @@
             }, () => { alert("GPS Error/Ditolak"); btn.innerHTML = oldText; });
         }
 
-        // Listeners
         map.on('click', function(e) { updatePosition(e.latlng.lat, e.latlng.lng); });
         
         var radios = document.querySelectorAll('input[name="jenis_kendaraan"]');
-        radios.forEach(radio => {
-            radio.addEventListener('change', function() { updatePriceUI(); });
-        });
+        radios.forEach(radio => { radio.addEventListener('change', function() { updatePriceUI(); }); });
         
         document.getElementById('bookingForm').addEventListener('submit', function(e) {
             if (!document.getElementById('latitude').value) {
