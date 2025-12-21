@@ -43,7 +43,6 @@
                 <div class="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                     <div class="lg:col-span-2 space-y-8">
-
                         <div>
                             <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b pb-2">Data Pelanggan</h4>
                             <div class="flex items-center gap-4 mb-4">
@@ -95,8 +94,19 @@
                                 <p class="text-gray-500 text-xs uppercase font-bold mb-1">Keluhan:</p>
                                 <p class="text-gray-700 italic">"{{ $order->keluhan }}"</p>
                             </div>
-                        </div>
 
+                            @if($order->foto_ban)
+                                <div class="mt-4">
+                                    <p class="text-xs text-gray-500 uppercase font-bold mb-2">Foto Kondisi Ban:</p>
+                                    <div class="rounded-lg overflow-hidden border border-gray-200 w-full max-w-xs cursor-pointer group relative" onclick="window.open('{{ asset('storage/' . $order->foto_ban) }}', '_blank')">
+                                        <img src="{{ asset('storage/' . $order->foto_ban) }}" alt="Foto Ban" class="w-full h-40 object-cover group-hover:opacity-90 transition">
+                                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/30 transition">
+                                            <i class="fa-solid fa-expand text-white text-xl drop-shadow-md"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                            </div>
                     </div>
 
                     <div class="space-y-6">
@@ -172,6 +182,7 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
                             <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Bengkel Tujuan</h3>
 

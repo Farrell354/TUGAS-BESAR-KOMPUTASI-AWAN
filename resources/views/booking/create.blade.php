@@ -20,7 +20,7 @@
                     </div>
                 </div>
 
-                <form action="{{ route('booking.store') }}" method="POST" class="space-y-5" id="bookingForm">
+                <form action="{{ route('booking.store') }}" method="POST" class="space-y-5" id="bookingForm" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="tambal_ban_id" value="{{ $bengkel->id }}">
                     <input type="hidden" name="latitude" id="latitude">
@@ -91,12 +91,39 @@
                                 <span><i class="fa-solid fa-car text-gray-600 mr-1"></i> Mobil</span>
                             </label>
                         </div>
+                        <p class="text-[10px] text-gray-400 mt-1">*Harga jasa berbeda untuk Motor dan Mobil.</p>
                     </div>
 
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1">Keluhan</label>
-                        <input type="text" name="keluhan" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            placeholder="Contoh: Bocor halus, ban robek">
+                        <input type="text" name="keluhan" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm mb-3"
+                            placeholder="Contoh: Bocor halus, ban robek, kena paku">
+                        
+                        <label class="block text-xs font-medium text-gray-500 mb-2">Foto Kondisi Ban (Opsional)</label>
+                        <div class="flex items-center justify-center w-full">
+                            <label for="foto_ban" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition relative overflow-hidden group">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6" id="uploadPlaceholder">
+                                    <i class="fa-solid fa-camera text-blue-500 text-3xl mb-2 drop-shadow-sm"></i>
+                                    <p class="text-sm text-gray-600 font-bold">Ambil Foto Ban</p>
+                                    <p class="text-[10px] text-gray-400">Jepret langsung (Kamera) atau pilih Galeri</p>
+                                </div>
+                                <img id="imgPreview" class="hidden absolute inset-0 w-full h-full object-cover">
+                                
+                                <input 
+                                    id="foto_ban" 
+                                    name="foto_ban" 
+                                    type="file" 
+                                    class="hidden" 
+                                    accept="image/*" 
+                                    capture="environment" 
+                                    onchange="previewImage(event)" 
+                                />
+                                
+                                <button type="button" id="removeBtn" onclick="removeImage()" class="hidden absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 items-center justify-center text-xs shadow-md z-10 hover:bg-red-600">
+                                    <i class="fa-solid fa-times"></i>
+                                </button>
+                            </label>
+                        </div>
                     </div>
 
                     <div class="mt-6 pt-6 border-t border-gray-100">
@@ -146,24 +173,23 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-<script>
-        // DATA BENGKEL & HARGA (DARI DATABASE)
+    <script>
+        // --- 1. CONFIG DATA BENGKEL & HARGA ---
         var bengkelLat = {{ $bengkel->latitude }};
         var bengkelLng = {{ $bengkel->longitude }};
         
-        // Simpan harga dalam Object JS agar mudah diakses
         var rates = {
             motor: {
-                dekat: {{ $bengkel->harga_motor_dekat }}, // misal: 20000
-                jauh: {{ $bengkel->harga_motor_jauh }}    // misal: 35000
+                dekat: {{ $bengkel->harga_motor_dekat }}, 
+                jauh: {{ $bengkel->harga_motor_jauh }}
             },
             mobil: {
-                dekat: {{ $bengkel->harga_mobil_dekat }}, // misal: 35000
-                jauh: {{ $bengkel->harga_mobil_jauh }}    // misal: 50000
+                dekat: {{ $bengkel->harga_mobil_dekat }},
+                jauh: {{ $bengkel->harga_mobil_jauh }}
             }
         };
-
-        // Init Peta
+        
+        // --- 2. MAP INIT ---
         var map = L.map('mapPicker').setView([bengkelLat, bengkelLng], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
 
@@ -174,7 +200,35 @@
         var currentLat = 0;
         var currentLng = 0;
 
-        // --- RUMUS JARAK ---
+        // --- 3. LOGIKA PREVIEW GAMBAR ---
+        function previewImage(event) {
+            var input = event.target;
+            var reader = new FileReader();
+            
+            reader.onload = function(){
+                var img = document.getElementById('imgPreview');
+                img.src = reader.result;
+                img.classList.remove('hidden');
+                document.getElementById('uploadPlaceholder').classList.add('opacity-0'); 
+                document.getElementById('removeBtn').classList.remove('hidden');
+                document.getElementById('removeBtn').classList.add('flex');
+            };
+            
+            if(input.files[0]) {
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removeImage() {
+            document.getElementById('foto_ban').value = "";
+            document.getElementById('imgPreview').src = "";
+            document.getElementById('imgPreview').classList.add('hidden');
+            document.getElementById('uploadPlaceholder').classList.remove('opacity-0');
+            document.getElementById('removeBtn').classList.add('hidden');
+            document.getElementById('removeBtn').classList.remove('flex');
+        }
+
+        // --- 4. RUMUS JARAK ---
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
             var R = 6371; 
             var dLat = deg2rad(lat2 - lat1);
@@ -187,7 +241,7 @@
         }
         function deg2rad(deg) { return deg * (Math.PI / 180); }
 
-        // --- FUNGSI UTAMA HITUNG HARGA ---
+        // --- 5. UPDATE HARGA ---
         function updatePriceUI() {
             if(currentLat == 0 || currentLng == 0) return;
 
@@ -203,17 +257,14 @@
             var priceDisplay = document.getElementById('priceDisplay');
 
             if (dist > 10) {
-                // KASUS: KEJAUHAN
                 priceDisplay.innerText = "-";
                 warningBox.classList.remove('hidden');
                 submitBtn.disabled = true;
                 submitBtn.className = "w-full bg-red-100 text-red-400 font-bold py-4 rounded-xl cursor-not-allowed flex justify-center items-center gap-2";
                 submitBtn.innerHTML = '<i class="fa-solid fa-ban"></i> Jarak Terlalu Jauh';
             } else {
-                // KASUS: AMAN
                 warningBox.classList.add('hidden');
                 
-                // --- AMBIL HARGA DARI VARIABEL 'rates' DI ATAS ---
                 if(vehicleType === 'mobil') {
                     if (dist <= 5) price = rates.mobil.dekat;
                     else price = rates.mobil.jauh;
@@ -221,21 +272,18 @@
                     if (dist <= 5) price = rates.motor.dekat;
                     else price = rates.motor.jauh;
                 }
-                // ------------------------------------------------
-
-                priceDisplay.innerText = "Rp " + price.toLocaleString('id-ID');
                 
+                priceDisplay.innerText = "Rp " + price.toLocaleString('id-ID');
                 submitBtn.disabled = false;
                 submitBtn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 flex justify-center items-center gap-2";
                 submitBtn.innerHTML = '<span>Buat Pesanan</span> <i class="fa-solid fa-arrow-right"></i>';
             }
         }
 
-        // --- UPDATE POSISI ---
+        // --- 6. UPDATE POSISI ---
         function updatePosition(lat, lng) {
             currentLat = lat;
             currentLng = lng;
-
             document.getElementById('latitude').value = lat;
             document.getElementById('longitude').value = lng;
             
@@ -245,6 +293,7 @@
                 userMarker.setLatLng([lat, lng]);
             } else {
                 userMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                userMarker.bindPopup("Lokasi Anda").openPopup();
                 userMarker.on('dragend', function(e) {
                     var pos = userMarker.getLatLng();
                     updatePosition(pos.lat, pos.lng);
@@ -256,22 +305,28 @@
             if (!navigator.geolocation) { alert("Browser error"); return; }
             var btn = document.querySelector('button[onclick="getLocation()"]');
             var oldText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mencari...';
 
             navigator.geolocation.getCurrentPosition((pos) => {
                 updatePosition(pos.coords.latitude, pos.coords.longitude);
                 map.setView([pos.coords.latitude, pos.coords.longitude], 15);
                 btn.innerHTML = oldText;
-            }, () => { alert("GPS Error"); btn.innerHTML = oldText; });
+            }, () => { alert("GPS Error/Ditolak"); btn.innerHTML = oldText; });
         }
 
+        // Listeners
         map.on('click', function(e) { updatePosition(e.latlng.lat, e.latlng.lng); });
-
+        
         var radios = document.querySelectorAll('input[name="jenis_kendaraan"]');
         radios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                updatePriceUI(); 
-            });
+            radio.addEventListener('change', function() { updatePriceUI(); });
+        });
+        
+        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+            if (!document.getElementById('latitude').value) {
+                e.preventDefault();
+                alert("Mohon tentukan lokasi Anda pada peta terlebih dahulu.");
+            }
         });
 
         getLocation();

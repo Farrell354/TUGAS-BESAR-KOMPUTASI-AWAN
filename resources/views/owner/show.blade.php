@@ -117,12 +117,13 @@
                                         <p class="text-xs text-green-700 font-bold uppercase tracking-wider mb-1">Metode Pembayaran</p>
                                         <h3 class="text-xl font-extrabold text-gray-800">TUNAI (COD)</h3>
                                         <p class="text-sm text-gray-600 mt-1">
-                                            Silakan tagih sebesar <strong>Rp {{ number_format($order->total_harga) }}</strong> ke pelanggan.
+                                            Tagih sebesar <strong>Rp {{ number_format($order->total_harga) }}</strong> ke pelanggan.
                                         </p>
                                     </div>
                                 </div>
                             </div>
                         @endif
+
                         <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b pb-2">Detail Kendaraan</h4>
 
                         <div class="flex items-center gap-3 mb-4">
@@ -132,11 +133,28 @@
                             </span>
                         </div>
 
-                        <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300 mb-8">
+                        <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300 mb-6">
                             <p class="text-xs text-gray-400 font-bold uppercase mb-1">Keluhan Pelanggan</p>
                             <p class="text-gray-700 text-sm italic">"{{ $order->keluhan }}"</p>
                         </div>
 
+                        @if($order->foto_ban)
+                            <div class="mb-8">
+                                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Foto Kondisi Ban</h4>
+                                <div class="rounded-xl overflow-hidden border border-gray-200 shadow-sm relative group bg-black">
+                                    <img src="{{ asset('storage/' . $order->foto_ban) }}" 
+                                         alt="Kondisi Ban" 
+                                         class="w-full h-48 object-cover opacity-90 group-hover:opacity-100 transition duration-300 cursor-pointer" 
+                                         onclick="window.open(this.src, '_blank')">
+                                    
+                                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 text-center pointer-events-none">
+                                        <span class="text-white text-xs font-bold flex items-center justify-center gap-1">
+                                            <i class="fa-solid fa-magnifying-glass-plus"></i> Klik untuk memperbesar
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                         <div class="space-y-3">
                             <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Tindakan Anda</h4>
 
@@ -173,14 +191,6 @@
                                         </button>
                                     </form>
                                 </div>
-
-                            @else
-                                <div class="text-center p-4 bg-gray-100 rounded-xl text-gray-500 text-sm border border-gray-200">
-                                    <i class="fa-solid fa-lock mr-1"></i> Pesanan ini telah selesai atau dibatalkan.
-                                    @if($order->status == 'batal' && $order->alasan_batal)
-                                        <p class="text-xs text-red-500 mt-1">Alasan: {{ $order->alasan_batal }}</p>
-                                    @endif
-                                </div>
                             @endif
                         </div>
 
@@ -196,7 +206,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // 1. Script Tolak Pesanan
+        // Script Tolak Pesanan
         function rejectOrder() {
             Swal.fire({
                 title: 'Tolak Pesanan?',
@@ -216,9 +226,7 @@
                 cancelButtonColor: '#6b7280',
                 confirmButtonText: 'Tolak Pesanan',
                 inputValidator: (value) => {
-                    if (!value) {
-                        return 'Anda harus memilih alasan!'
-                    }
+                    if (!value) { return 'Anda harus memilih alasan!' }
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
@@ -228,7 +236,7 @@
             });
         }
 
-        // 2. Script Selesai Pesanan
+        // Script Selesai Pesanan
         function confirmFinish() {
             Swal.fire({
                 title: 'Selesaikan Pesanan?',
@@ -252,7 +260,7 @@
             });
         }
 
-        // 3. Script Peta
+        // Script Peta
         @if($order->latitude && $order->longitude)
         document.addEventListener("DOMContentLoaded", function() {
             var lat = {{ $order->latitude }};
