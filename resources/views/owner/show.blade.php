@@ -4,7 +4,7 @@
             <a href="{{ route('owner.dashboard') }}" class="bg-white border border-gray-300 h-10 w-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-50 transition">
                 <i class="fa-solid fa-arrow-left"></i>
             </a>
-            <h2 class="font-bold text-xl text-gray-800">Detail Pesanan #{{ $order->id }}</h2>
+            <h2 class="font-bold text-xl text-gray-800">Detail Pesanan #{{ $order->kode_order ?? $order->id }}</h2>
         </div>
     </x-slot>
 
@@ -30,8 +30,8 @@
                                 'batal' => 'Dibatalkan'
                             ];
                         @endphp
-                        <span class="px-3 py-1 rounded-lg font-bold text-sm uppercase border {{ $colors[$order->status] }}">
-                            <i class="fa-solid fa-circle text-[10px] mr-1"></i> {{ $labels[$order->status] }}
+                        <span class="px-3 py-1 rounded-lg font-bold text-sm uppercase border {{ $colors[$order->status] ?? 'text-gray-600 bg-gray-100' }}">
+                            <i class="fa-solid fa-circle text-[10px] mr-1"></i> {{ $labels[$order->status] ?? $order->status }}
                         </span>
                     </div>
                     <div class="text-left md:text-right">
@@ -81,21 +81,48 @@
 
                     <div>
 
-                        <div class="bg-green-50 border border-green-200 rounded-xl p-5 mb-6 shadow-sm">
-                            <div class="flex items-start gap-4">
-                                <div class="bg-green-100 p-3 rounded-lg text-green-600 shrink-0">
-                                    <i class="fa-solid fa-wallet text-2xl"></i>
-                                </div>
-                                <div>
-                                    <p class="text-xs text-green-700 font-bold uppercase tracking-wider mb-1">Metode Pembayaran</p>
-                                    <h3 class="text-xl font-extrabold text-gray-800">TUNAI (COD)</h3>
-                                    <p class="text-sm text-gray-600 mt-1">
-                                        Silakan tagih pembayaran ke pelanggan setelah jasa selesai dikerjakan.
-                                    </p>
+                        @if($order->metode_pembayaran == 'transfer')
+                            <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6 shadow-sm">
+                                <div class="flex items-start gap-4">
+                                    <div class="bg-blue-100 p-3 rounded-lg text-blue-600 shrink-0">
+                                        <i class="fa-solid fa-credit-card text-2xl"></i>
+                                    </div>
+                                    <div class="w-full">
+                                        <p class="text-xs text-blue-700 font-bold uppercase tracking-wider mb-1">Metode Pembayaran</p>
+                                        <h3 class="text-xl font-extrabold text-gray-800">TRANSFER / E-WALLET</h3>
+                                        
+                                        <div class="mt-2 flex justify-between items-center bg-white/50 p-2 rounded border border-blue-100">
+                                            <span class="text-xs font-bold text-gray-500">Status Bayar:</span>
+                                            @if($order->payment_status == 'paid')
+                                                <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-bold border border-green-200 flex items-center gap-1">
+                                                    <i class="fa-solid fa-check-circle"></i> LUNAS
+                                                </span>
+                                            @else
+                                                <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-bold border border-yellow-200 flex items-center gap-1">
+                                                    <i class="fa-solid fa-hourglass"></i> BELUM DIBAYAR
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <p class="text-xs text-blue-600 mt-2 font-bold">Total: Rp {{ number_format($order->total_harga) }}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-
+                        @else
+                            <div class="bg-green-50 border border-green-200 rounded-xl p-5 mb-6 shadow-sm">
+                                <div class="flex items-start gap-4">
+                                    <div class="bg-green-100 p-3 rounded-lg text-green-600 shrink-0">
+                                        <i class="fa-solid fa-wallet text-2xl"></i>
+                                    </div>
+                                    <div class="w-full">
+                                        <p class="text-xs text-green-700 font-bold uppercase tracking-wider mb-1">Metode Pembayaran</p>
+                                        <h3 class="text-xl font-extrabold text-gray-800">TUNAI (COD)</h3>
+                                        <p class="text-sm text-gray-600 mt-1">
+                                            Silakan tagih sebesar <strong>Rp {{ number_format($order->total_harga) }}</strong> ke pelanggan.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                         <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b pb-2">Detail Kendaraan</h4>
 
                         <div class="flex items-center gap-3 mb-4">
@@ -205,7 +232,7 @@
         function confirmFinish() {
             Swal.fire({
                 title: 'Selesaikan Pesanan?',
-                text: "Pastikan Anda sudah menerima pembayaran tunai.",
+                text: "Pastikan jasa sudah selesai dikerjakan.",
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#22c55e',
@@ -214,7 +241,6 @@
                 reverseButtons: true
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Tambah input hidden action=finish
                     var form = document.getElementById('finishForm');
                     var input = document.createElement('input');
                     input.type = 'hidden';

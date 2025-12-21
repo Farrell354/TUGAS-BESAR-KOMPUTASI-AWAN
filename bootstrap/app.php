@@ -16,6 +16,15 @@ return Application::configure(basePath: dirname(__DIR__))
             'isAdmin' => \App\Http\Middleware\IsAdmin::class,
             'isOwner' => \App\Http\Middleware\IsOwner::class,
         ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'midtrans-callback', // Izinkan URL ini diakses tanpa token CSRF
+        ]);
+
+        $middleware->alias([
+            'isAdmin' => \App\Http\Middleware\IsAdmin::class,
+            'isOwner' => \App\Http\Middleware\IsOwner::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

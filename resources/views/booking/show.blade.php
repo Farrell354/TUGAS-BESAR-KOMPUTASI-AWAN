@@ -1,11 +1,15 @@
 <x-app-layout>
+    <head>
+        <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
+    </head>
+
     <x-slot name="header">
         <div class="flex items-center gap-4">
             <a href="{{ route('booking.history') }}" class="bg-white border border-gray-300 h-10 w-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-50 transition shadow-sm">
                 <i class="fa-solid fa-arrow-left"></i>
             </a>
             <h2 class="font-bold text-xl text-gray-800 leading-tight">
-                Detail Pesanan #{{ $order->id }}
+                Detail Pesanan #{{ $order->kode_order ?? $order->id }}
             </h2>
         </div>
     </x-slot>
@@ -22,7 +26,7 @@
                         'selesai' => ['bg' => 'bg-green-600', 'icon' => 'fa-check-circle', 'label' => 'Selesai'],
                         'batal' => ['bg' => 'bg-red-600', 'icon' => 'fa-circle-xmark', 'label' => 'Dibatalkan']
                     ];
-                    $st = $statusStyles[$order->status];
+                    $st = $statusStyles[$order->status] ?? $statusStyles['pending'];
                 @endphp
                 <div class="{{ $st['bg'] }} p-6 text-white flex flex-col md:flex-row justify-between items-center gap-4">
                     <div class="flex items-center gap-3">
@@ -43,18 +47,12 @@
                 @if($order->status == 'batal' && $order->alasan_batal)
                     <div class="bg-red-50 border-l-4 border-red-500 p-4 m-6 mb-0 rounded-r-lg shadow-sm">
                         <div class="flex">
-                            <div class="flex-shrink-0">
-                                <i class="fa-solid fa-circle-info text-red-500 text-xl"></i>
-                            </div>
+                            <div class="flex-shrink-0"><i class="fa-solid fa-circle-info text-red-500 text-xl"></i></div>
                             <div class="ml-3">
-                                <h3 class="text-sm font-bold text-red-800">Pesanan Dibatalkan oleh Bengkel</h3>
-                                <div class="mt-1 text-sm text-red-700">
-                                    Alasan: <span class="font-bold">"{{ $order->alasan_batal }}"</span>
-                                </div>
+                                <h3 class="text-sm font-bold text-red-800">Pesanan Dibatalkan</h3>
+                                <div class="mt-1 text-sm text-red-700">Alasan: <span class="font-bold">"{{ $order->alasan_batal }}"</span></div>
                                 <div class="mt-2">
-                                    <a href="{{ route('peta.index') }}" class="text-xs font-bold text-red-600 hover:text-red-800 underline">
-                                        Cari Bengkel Lain &rarr;
-                                    </a>
+                                    <a href="{{ route('peta.index') }}" class="text-xs font-bold text-red-600 hover:text-red-800 underline">Cari Bengkel Lain →</a>
                                 </div>
                             </div>
                         </div>
@@ -92,13 +90,47 @@
                             </div>
                         </div>
 
-                        <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6 relative overflow-hidden">
-                            <div class="absolute right-0 top-0 p-2 opacity-10">
-                                <i class="fa-solid fa-money-bill-wave text-6xl text-gray-800"></i>
-                            </div>
-                            <p class="text-xs text-gray-500 font-bold uppercase mb-1">Metode Pembayaran</p>
-                            <h3 class="text-lg font-bold text-gray-800">Tunai (Bayar di Tempat)</h3>
-                            <p class="text-xs text-gray-500 mt-1">Harap siapkan uang tunai saat mekanik tiba.</p>
+                        <div class="bg-gray-50 border border-gray-200 rounded-xl p-5 mb-6 relative overflow-hidden">
+                            <p class="text-xs text-gray-500 font-bold uppercase mb-2">Metode Pembayaran</p>
+                            
+                            @if($order->metode_pembayaran == 'transfer')
+                                <h3 class="text-lg font-bold text-blue-700 flex items-center gap-2">
+                                    <i class="fa-solid fa-credit-card"></i> Transfer / E-Wallet
+                                </h3>
+                                
+                                <div class="mt-3 border-t border-gray-200 pt-3">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-sm text-gray-600">Total Tagihan</span>
+                                        <span class="text-lg font-bold text-gray-900">Rp {{ number_format($order->total_harga) }}</span>
+                                    </div>
+
+                                    @if($order->status == 'batal')
+                                        <div class="bg-gray-200 text-gray-500 p-3 rounded-lg font-bold text-center border border-gray-300 flex items-center justify-center gap-2">
+                                            <i class="fa-solid fa-ban"></i> TRANSAKSI DIBATALKAN
+                                        </div>
+                                    @elseif($order->payment_status == 'paid')
+                                        <div class="bg-green-100 text-green-700 p-3 rounded-lg font-bold text-center border border-green-300 flex items-center justify-center gap-2">
+                                            <i class="fa-solid fa-circle-check"></i> PEMBAYARAN LUNAS
+                                        </div>
+                                    @elseif($order->payment_status == 'unpaid')
+                                        <button id="pay-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg transition flex items-center justify-center gap-2">
+                                            Bayar Sekarang <i class="fa-solid fa-angle-right"></i>
+                                        </button>
+                                        <p class="text-[10px] text-center text-gray-500 mt-2">Klik tombol untuk memilih metode pembayaran.</p>
+                                    @else
+                                        <div class="bg-red-100 text-red-700 p-2 rounded text-sm text-center font-bold">
+                                            Pembayaran Gagal / Kadaluarsa
+                                        </div>
+                                    @endif
+                                </div>
+
+                            @else
+                                <div class="absolute right-0 top-0 p-2 opacity-10">
+                                    <i class="fa-solid fa-money-bill-wave text-6xl text-gray-800"></i>
+                                </div>
+                                <h3 class="text-lg font-bold text-gray-800">Tunai (Bayar di Tempat)</h3>
+                                <p class="text-sm text-gray-500 mt-1">Harap siapkan uang tunai sebesar <span class="font-bold text-gray-800">Rp {{ number_format($order->total_harga) }}</span> saat mekanik tiba.</p>
+                            @endif
                         </div>
 
                     </div>
@@ -140,7 +172,6 @@
                                 </a>
                             </div>
                         @endif
-
                     </div>
                 </div>
 
@@ -165,28 +196,46 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        function confirmCancel() {
-            Swal.fire({
-                title: 'Batalkan Pesanan?',
-                text: "Yakin ingin membatalkan?",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Ya, Batalkan!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('cancelForm').submit();
-                }
+        // 1. Logic Popup Midtrans
+        var payButton = document.getElementById('pay-button');
+        if(payButton) {
+            payButton.addEventListener('click', function () {
+                // Pastikan snap_token ada
+                @if($order->snap_token)
+                    window.snap.pay('{{ $order->snap_token }}', {
+                        onSuccess: function(result){
+                            Swal.fire("Berhasil!", "Pembayaran berhasil!", "success").then(() => window.location.reload());
+                        },
+                        onPending: function(result){
+                            Swal.fire("Menunggu!", "Silakan selesaikan pembayaran.", "info").then(() => window.location.reload());
+                        },
+                        onError: function(result){
+                            Swal.fire("Gagal!", "Pembayaran gagal.", "error").then(() => window.location.reload());
+                        },
+                        onClose: function(){
+                            // User tutup popup tanpa bayar
+                        }
+                    });
+                @else
+                    Swal.fire("Error", "Token pembayaran tidak ditemukan. Silakan hubungi admin.", "error");
+                @endif
             });
         }
 
+        // 2. Logic Konfirmasi Batal
+        function confirmCancel() {
+            Swal.fire({
+                title: 'Batalkan Pesanan?', text: "Yakin ingin membatalkan?", icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#6b7280', confirmButtonText: 'Ya, Batalkan!'
+            }).then((result) => { if (result.isConfirmed) document.getElementById('cancelForm').submit(); });
+        }
+
+        // 3. Logic Peta
         @if($order->latitude && $order->longitude)
         document.addEventListener("DOMContentLoaded", function() {
-            var lat = {{ $order->latitude }};
-            var lng = {{ $order->longitude }};
+            var lat = {{ $order->latitude }}, lng = {{ $order->longitude }};
             var map = L.map('mapUserLocation', {zoomControl: false}).setView([lat, lng], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
             var iconHtml = `<div class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-blue-600 border border-white"></span></div>`;
             var icon = L.divIcon({className: 'bg-transparent border-none', html: iconHtml});
             L.marker([lat, lng], {icon: icon}).addTo(map);

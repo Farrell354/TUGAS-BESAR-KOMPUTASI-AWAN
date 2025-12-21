@@ -20,14 +20,18 @@ class TambalBan extends Model
         'jam_tutup',
         'latitude',
         'longitude',
-        'deskripsi'
+        'deskripsi',
+        'harga_motor_dekat',
+        'harga_motor_jauh',
+        'harga_mobil_dekat',
+        'harga_mobil_jauh',
     ];
 
     // Relasi Review
-    // public function reviews()
-    // {
-    //     return $this->hasMany(Review::class);
-    // }
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
 
     // Helper untuk hitung rata-rata rating
     public function getRataRataRatingAttribute()

@@ -6,7 +6,7 @@
                     Dashboard Mitra
                 </h2>
                 <p class="text-sm text-gray-500 mt-1">
-                    <i class="fa-solid fa-store text-orange-500 mr-1"></i> {{ $bengkel->nama_bengkel }}
+                    <i class="fa-solid fa-store text-orange-500 mr-1"></i> {{ $bengkel->nama_bengkel ?? 'Nama Bengkel' }}
                 </p>
             </div>
 
@@ -26,6 +26,19 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
+            <div class="mb-6 bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-lg p-6 text-white flex flex-col md:flex-row items-center justify-between gap-6">
+                <div>
+                    <h3 class="text-xl font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-wrench"></i> Kelola Bengkel Anda
+                    </h3>
+                    <p class="text-blue-100 text-sm mt-1 max-w-xl">
+                        Atur harga jasa, ubah lokasi, dan perbarui jam operasional agar pelanggan mendapatkan informasi yang akurat.
+                    </p>
+                </div>
+                <a href="{{ route('owner.bengkel.edit') }}" class="bg-white text-blue-700 hover:bg-blue-50 font-bold py-3 px-6 rounded-lg shadow transition transform active:scale-95 flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-gear"></i> Atur Profil & Tarif
+                </a>
+            </div>
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-xl border border-gray-100">
                 <div class="p-6 bg-white border-b border-gray-100 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-gray-800">Pesanan Masuk</h3>
