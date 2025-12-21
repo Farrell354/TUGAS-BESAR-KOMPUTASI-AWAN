@@ -3,26 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Models\TambalBan;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage; // PENTING: Import Storage
 use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth; // <--- PENTING: Tambahkan ini
 
 class TambalBanController extends Controller
 {
+    // =========================================================
+    // BAGIAN 1: UNTUK ADMIN (JANGAN DIUBAH)
+    // =========================================================
+
     public function index()
     {
         $data = TambalBan::all();
         return view('admin.dashboard', compact('data'));
     }
 
-public function create()
+    public function create()
     {
-        // Ambil semua user yang role-nya 'owner'
         $owners = User::where('role', 'owner')->get();
         return view('admin.create', compact('owners'));
     }
 
-    // SIMPAN DATA BARU (+GAMBAR)
     public function store(Request $request)
     {
         $request->validate([
@@ -34,35 +37,29 @@ public function create()
             'jam_buka'      => 'required',
             'jam_tutup'     => 'required',
             'kategori'      => 'required',
-            'gambar'        => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Validasi Gambar
-            'user_id' => 'nullable|exists:users,id',
+            'gambar'        => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'user_id'       => 'nullable|exists:users,id',
         ]);
 
         $data = $request->all();
 
-        // LOGIKA UPLOAD GAMBAR
         if ($request->hasFile('gambar')) {
-            // Simpan ke folder 'public/bengkel_images'
             $path = $request->file('gambar')->store('bengkel_images', 'public');
             $data['gambar'] = $path;
         }
-
 
         TambalBan::create($data);
 
         return redirect()->route('dashboard')->with('success', 'Lokasi berhasil ditambahkan');
     }
 
-public function edit($id)
+    public function edit($id)
     {
         $tambalBan = TambalBan::findOrFail($id);
-        // Ambil semua owner untuk dropdown
         $owners = User::where('role', 'owner')->get();
-
         return view('admin.edit', compact('tambalBan', 'owners'));
     }
 
-    // UPDATE DATA (+GANTI GAMBAR)
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -75,20 +72,16 @@ public function edit($id)
             'jam_tutup'     => 'required',
             'kategori'      => 'required',
             'gambar'        => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'user_id' => 'nullable|exists:users,id',
+            'user_id'       => 'nullable|exists:users,id',
         ]);
 
         $tambalBan = TambalBan::findOrFail($id);
         $data = $request->all();
 
-        // LOGIKA GANTI GAMBAR
         if ($request->hasFile('gambar')) {
-            // 1. Hapus gambar lama jika ada
             if ($tambalBan->gambar && Storage::disk('public')->exists($tambalBan->gambar)) {
                 Storage::disk('public')->delete($tambalBan->gambar);
             }
-
-            // 2. Upload gambar baru
             $path = $request->file('gambar')->store('bengkel_images', 'public');
             $data['gambar'] = $path;
         }
@@ -98,18 +91,13 @@ public function edit($id)
         return redirect()->route('dashboard')->with('success', 'Data berhasil diperbarui');
     }
 
-    // HAPUS DATA (+HAPUS FILE GAMBAR)
     public function destroy($id)
     {
         $tambalBan = TambalBan::findOrFail($id);
-
-        // Hapus file gambar dari penyimpanan
         if ($tambalBan->gambar && Storage::disk('public')->exists($tambalBan->gambar)) {
             Storage::disk('public')->delete($tambalBan->gambar);
         }
-
         $tambalBan->delete();
-
         return redirect()->route('dashboard')->with('success', 'Lokasi berhasil dihapus');
     }
 
@@ -123,5 +111,60 @@ public function edit($id)
     {
         $lokasi = TambalBan::all();
         return view('dashboard', compact('lokasi'));
+    }
+
+    // =========================================================
+    // BAGIAN 2: KHUSUS UNTUK OWNER (BARU)
+    // =========================================================
+
+    /**
+     * Menampilkan Form Edit KHUSUS Owner (Hanya bengkel miliknya sendiri)
+     */
+    public function editOwner()
+    {
+        // Cari bengkel berdasarkan ID user yang sedang login
+        $bengkel = TambalBan::where('user_id', Auth::id())->first();
+
+        // Jika owner belum punya bengkel yang di-assign oleh admin
+        if (!$bengkel) {
+            return redirect()->route('owner.dashboard')->with('error', 'Anda belum memiliki profil bengkel. Hubungi Admin.');
+        }
+
+        // Arahkan ke view khusus owner yang tadi kita buat
+        return view('owner.bengkel.edit', compact('bengkel'));
+    }
+
+    /**
+     * Simpan Perubahan Data oleh Owner (Termasuk Harga)
+     */
+    public function updateOwner(Request $request, $id)
+    {
+        // Pastikan bengkel yang diedit adalah milik user yang login (Keamanan)
+        $bengkel = TambalBan::where('user_id', Auth::id())->findOrFail($id);
+
+        $request->validate([
+            'nama_bengkel'  => 'required|string|max:255',
+            'nomer_telepon' => 'required|numeric',
+            'alamat'        => 'required|string',
+            'deskripsi'     => 'nullable|string',
+            'jam_buka'      => 'nullable',
+            'jam_tutup'     => 'nullable',
+            'is_open'       => 'required|boolean',
+            'latitude'      => 'required',
+            'longitude'     => 'required',
+            
+            // Validasi Harga (Wajib ada karena Owner yang atur)
+            'harga_motor_dekat' => 'required|numeric|min:0',
+            'harga_motor_jauh'  => 'required|numeric|min:0',
+            'harga_mobil_dekat' => 'required|numeric|min:0',
+            'harga_mobil_jauh'  => 'required|numeric|min:0',
+        ]);
+
+        $data = $request->all();
+
+        // Update data ke database
+        $bengkel->update($data);
+
+        return redirect()->back()->with('success', 'Profil dan Tarif Bengkel berhasil diperbarui!');
     }
 }

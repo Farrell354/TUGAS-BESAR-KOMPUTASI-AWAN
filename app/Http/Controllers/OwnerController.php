@@ -67,4 +67,12 @@ class OwnerController extends Controller
 
         return view('owner.show', compact('order'));
     }
+
+    public function edit()
+    {
+        // Ambil bengkel milik user yang sedang login
+        $bengkel = TambalBan::where('user_id', Auth::id())->firstOrFail();
+
+        return view('owner.bengkel.edit', compact('bengkel'));
+    }
 }

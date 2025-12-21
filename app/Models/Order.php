@@ -13,7 +13,10 @@ protected $fillable = [
         'user_id', 'tambal_ban_id', 'nama_pemesan',
         'nomer_telepon', 'alamat_lengkap', 'jenis_kendaraan',
         'keluhan', 'status', 'alasan_batal',
-        'latitude', 'longitude'
+        'latitude', 'longitude', 'total_harga',
+        'metode_pembayaran',
+        'payment_status',
+        'snap_token'
     ];
 
     public function tambalBan()

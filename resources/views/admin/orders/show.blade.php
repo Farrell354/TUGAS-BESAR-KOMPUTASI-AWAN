@@ -5,7 +5,7 @@
                 <i class="fa-solid fa-arrow-left"></i>
             </a>
             <h2 class="font-bold text-xl text-gray-800 leading-tight">
-                Monitoring Pesanan #{{ $order->id }}
+                Monitoring Pesanan #{{ $order->kode_order ?? $order->id }}
             </h2>
         </div>
     </x-slot>
@@ -22,7 +22,7 @@
                         'selesai' => ['bg' => 'bg-green-600', 'icon' => 'fa-check-circle', 'label' => 'Selesai'],
                         'batal' => ['bg' => 'bg-red-600', 'icon' => 'fa-circle-xmark', 'label' => 'Dibatalkan']
                     ];
-                    $st = $statusStyles[$order->status];
+                    $st = $statusStyles[$order->status] ?? $statusStyles['pending'];
                 @endphp
                 <div class="{{ $st['bg'] }} p-6 text-white flex flex-col md:flex-row justify-between items-center gap-4">
                     <div class="flex items-center gap-3">
@@ -137,16 +137,41 @@
                             </form>
                         </div>
 
-                        <div class="bg-green-50 border border-green-200 rounded-xl p-4 shadow-sm">
+                        <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 shadow-sm">
                             <div class="flex gap-3">
-                                <i class="fa-solid fa-wallet text-2xl text-green-600"></i>
-                                <div>
-                                    <p class="text-xs text-green-700 font-bold uppercase">Metode Pembayaran</p>
-                                    <p class="font-bold text-gray-800">Tunai (COD)</p>
+                                @if($order->metode_pembayaran == 'transfer')
+                                    <i class="fa-solid fa-credit-card text-2xl text-blue-600"></i>
+                                @else
+                                    <i class="fa-solid fa-wallet text-2xl text-green-600"></i>
+                                @endif
+                                
+                                <div class="w-full">
+                                    <p class="text-xs text-gray-500 font-bold uppercase">Metode Pembayaran</p>
+                                    
+                                    @if($order->metode_pembayaran == 'transfer')
+                                        <p class="font-bold text-blue-700">Transfer / E-Wallet</p>
+                                        <div class="flex justify-between items-center mt-1">
+                                            <span class="text-xs text-gray-500">Status:</span>
+                                            @if($order->payment_status == 'paid')
+                                                <span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded border border-green-200 font-bold">LUNAS</span>
+                                            @elseif($order->payment_status == 'unpaid')
+                                                <span class="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded border border-yellow-200 font-bold">BELUM BAYAR</span>
+                                            @else
+                                                <span class="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded border border-red-200 font-bold">GAGAL</span>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <p class="font-bold text-gray-800">Tunai (COD)</p>
+                                        <p class="text-[10px] text-gray-500">Bayar ke mekanik</p>
+                                    @endif
+                                    
+                                    <div class="mt-2 pt-2 border-t border-gray-200 flex justify-between items-center">
+                                        <span class="text-xs font-bold text-gray-600">Total</span>
+                                        <span class="font-bold text-gray-900">Rp {{ number_format($order->total_harga) }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-
                         <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
                             <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Bengkel Tujuan</h3>
 
@@ -184,7 +209,7 @@
             var lat = {{ $order->latitude }};
             var lng = {{ $order->longitude }};
             var map = L.map('mapAdminDetail', {zoomControl: false}).setView([lat, lng], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
 
             var iconHtml = `<div class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-red-600 border border-white shadow-sm"></span></div>`;
             var icon = L.divIcon({className: 'bg-transparent border-none', html: iconHtml});
