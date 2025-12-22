@@ -23,18 +23,11 @@ pipeline {
             }
         }
 
-        // TAHAP 3: Setting Environment (Supaya Laravel bisa jalan)
         stage('3. Setup Environment') {
-            steps {
-                // Copy file .env.example jadi .env
-                bat 'cp .env.example .env'
-                
-                // Generate kunci rahasia aplikasi
-                bat 'php artisan key:generate'
-                
-                // (Optional) Buat database SQLite dummy untuk testing
-                bat 'touch database/database.sqlite'
-                bat 'php artisan migrate --force'
+        steps {
+            // Gunakan 'copy' (Windows) bukan 'cp' (Linux)
+            bat 'copy .env.example .env'
+            bat 'php artisan key:generate'
             }
         }
 
