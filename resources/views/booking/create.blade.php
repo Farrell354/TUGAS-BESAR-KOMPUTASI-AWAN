@@ -168,11 +168,19 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script>
-        var bengkelLat = {{ $bengkel->latitude }};
-        var bengkelLng = {{ $bengkel->longitude }};
+        var bengkelLat = Number(@json($bengkel->latitude));
+        var bengkelLng = Number(@json($bengkel->longitude));
+        var namaBengkel = @json($bengkel->nama_bengkel);
+
         var rates = {
-            motor: { dekat: {{ $bengkel->harga_motor_dekat }}, jauh: {{ $bengkel->harga_motor_jauh }} },
-            mobil: { dekat: {{ $bengkel->harga_mobil_dekat }}, jauh: {{ $bengkel->harga_mobil_jauh }} }
+            motor: { 
+                dekat: Number(@json($bengkel->harga_motor_dekat)), 
+                jauh: Number(@json($bengkel->harga_motor_jauh)) 
+            },
+            mobil: { 
+                dekat: Number(@json($bengkel->harga_mobil_dekat)), 
+                jauh: Number(@json($bengkel->harga_mobil_jauh)) 
+            }
         };
         
         var map = L.map('mapPicker').setView([bengkelLat, bengkelLng], 13);
