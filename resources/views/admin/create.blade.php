@@ -86,16 +86,16 @@
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="text-xs text-gray-500 font-bold mb-1 block">Latitude</label>
-                                    <input type="text" name="latitude" id="latitude" placeholder="-7.xxxx" class="w-full rounded-lg border-gray-300 text-sm bg-gray-50" readonly required>
+                                    <input type="text" name="latitude" id="latitude" placeholder="-7.xxxx" class="w-full rounded-lg border-gray-300 text-sm bg-white focus:ring-blue-500" required>
                                 </div>
                                 <div>
                                     <label class="text-xs text-gray-500 font-bold mb-1 block">Longitude</label>
-                                    <input type="text" name="longitude" id="longitude" placeholder="112.xxxx" class="w-full rounded-lg border-gray-300 text-sm bg-gray-50" readonly required>
+                                    <input type="text" name="longitude" id="longitude" placeholder="112.xxxx" class="w-full rounded-lg border-gray-300 text-sm bg-white focus:ring-blue-500" required>
                                 </div>
                             </div>
                             <p class="text-xs text-blue-600 mt-2 bg-blue-50 p-2 rounded border border-blue-100 flex items-start gap-1">
                                 <i class="fa-solid fa-circle-info mt-0.5"></i>
-                                Geser peta atau klik lokasi tepat bengkel.
+                                Geser peta atau ketik koordinat secara manual.
                             </p>
                         </div>
 
@@ -141,6 +141,33 @@
             iconSize: [20, 20], iconAnchor: [10, 10]
         });
 
+        // Fungsi Update Marker saat Input Manual
+        function updateMarkerFromInput() {
+            var lat = parseFloat(document.getElementById('latitude').value);
+            var lng = parseFloat(document.getElementById('longitude').value);
+            
+            if (!isNaN(lat) && !isNaN(lng)) {
+                var newLatLng = new L.LatLng(lat, lng);
+                
+                if (marker) {
+                    marker.setLatLng(newLatLng);
+                } else {
+                    marker = L.marker(newLatLng, { draggable: true }).addTo(map);
+                    // Tambahkan listener dragend untuk marker baru
+                    marker.on('dragend', function(ev) {
+                        var pos = ev.target.getLatLng();
+                        document.getElementById('latitude').value = pos.lat.toFixed(6);
+                        document.getElementById('longitude').value = pos.lng.toFixed(6);
+                    });
+                }
+                map.panTo(newLatLng);
+            }
+        }
+
+        // Listener saat mengetik di input
+        document.getElementById('latitude').addEventListener('input', updateMarkerFromInput);
+        document.getElementById('longitude').addEventListener('input', updateMarkerFromInput);
+
         // Event Klik Peta
         map.on('click', function(e) {
             var lat = e.latlng.lat.toFixed(6);
@@ -160,16 +187,20 @@
             });
         });
 
-        // Tombol Current Location (Opsional, fitur tambahan)
+        // Tombol Current Location
         var btnLoc = L.control({position: 'topright'});
         btnLoc.onAdd = function(map) {
             var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
-            div.innerHTML = '<button type="button" class="bg-white p-2 rounded shadow text-gray-600 hover:text-blue-600" title="Lokasi Saya"><i class="fa-solid fa-crosshairs"></i></button>';
+            div.innerHTML = '<button type="button" class="bg-white p-2 rounded shadow text-gray-600 hover:text-blue-600 w-8 h-8 flex items-center justify-center border border-gray-300" title="Lokasi Saya"><i class="fa-solid fa-crosshairs"></i></button>';
             div.onclick = function(e) {
-                e.preventDefault(); // Mencegah submit form
+                e.preventDefault(); 
                 navigator.geolocation.getCurrentPosition(pos => {
                     var lat = pos.coords.latitude; var lng = pos.coords.longitude;
                     map.flyTo([lat, lng], 16);
+                    // Opsional: Langsung set marker di lokasi user
+                    // document.getElementById('latitude').value = lat;
+                    // document.getElementById('longitude').value = lng;
+                    // if(marker) marker.setLatLng([lat, lng]); else marker = L.marker([lat, lng], {draggable:true}).addTo(map);
                 });
             };
             return div;
