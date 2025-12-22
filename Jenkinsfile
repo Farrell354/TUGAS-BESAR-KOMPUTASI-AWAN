@@ -25,9 +25,9 @@ pipeline {
 
         stage('3. Setup Environment') {
         steps {
-            // Gunakan 'copy' (Windows) bukan 'cp' (Linux)
             bat 'copy .env.example .env'
             bat 'php artisan key:generate'
+            bat 'php artisan migrate --force'
             }
         }
 
