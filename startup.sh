@@ -1,19 +1,22 @@
-#!/bin/bash
+#!/bin/sh
 
-# 1. Backup config asli
-cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.bak
+# Timpa konfigurasi Nginx dengan yang benar
+echo 'server {
+    listen 8080;
+    listen [::]:8080;
+    root /home/site/wwwroot/public;
+    index index.php index.html index.htm;
+    server_name _;
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+}' > /etc/nginx/sites-available/default
 
-# 2. Arahkan root ke folder public
-sed -i 's|root /home/site/wwwroot;|root /home/site/wwwroot/public;|g' /etc/nginx/sites-available/default
-
-# 3. Tambahkan index.php
-sed -i 's|index index.php index.html index.htm;|index index.php index.html index.htm;|g' /etc/nginx/sites-available/default
-
-# 4. FIX ROUTING (Ini yang bikin /register bisa jalan)
-sed -i 's|try_files $uri $uri/ =404;|try_files $uri $uri/ /index.php?$args;|g' /etc/nginx/sites-available/default
-
-# 5. Restart Nginx
+# Reload Nginx
 service nginx reload
-
-# 6. Jalankan PHP
-php-fpm
