@@ -23,7 +23,8 @@ Route::get('/', function () {
 
 // 2. Halaman Peta (Untuk User Mencari Tambal Ban)
 Route::get('/peta', function () {
-    $lokasi = \App\Models\TambalBan::with('reviews')->get();
+    $lokasi = TambalBan::with('reviews')->get(); 
+    
     return view('peta', compact('lokasi'));
 })->name('peta.index');
 
