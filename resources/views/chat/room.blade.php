@@ -1,62 +1,59 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
+    <div class="flex flex-col h-[calc(100dvh-65px)] bg-[#efe7dd]"> 
+        <div class="bg-white px-4 py-3 shadow-sm border-b border-gray-200 flex justify-between items-center z-20 shrink-0">
             <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold border-2 border-white shadow-sm">
-                    <i class="fa-solid fa-user"></i>
+                <div class="relative">
+                    <div class="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold border border-gray-200 overflow-hidden">
+                        <i class="fa-solid fa-user text-lg"></i>
+                    </div>
+                    <span class="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white"></span>
                 </div>
-                <div>
-                    <h2 class="font-bold text-lg text-gray-800 leading-tight">
+                
+                <div class="leading-tight">
+                    <h2 class="font-bold text-gray-800 text-sm md:text-base line-clamp-1">
                         @if(Auth::id() == $order->user_id)
                             {{ $order->tambalBan->nama_bengkel }}
-                            <span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full ml-1">Owner</span>
+                            <span class="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded font-bold ml-1 align-middle">MITRA</span>
                         @else
                             {{ $order->nama_pemesan }}
-                            <span class="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full ml-1">Pelanggan</span>
+                            <span class="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded font-bold ml-1 align-middle">USER</span>
                         @endif
                     </h2>
-                    <p class="text-xs text-green-500 flex items-center gap-1">
-                        <span class="relative flex h-2 w-2">
-                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                          <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                        </span>
-                        Online
-                    </p>
+                    <p class="text-[10px] md:text-xs text-green-600 font-medium">● Online</p>
                 </div>
             </div>
 
             <a href="{{ Auth::user()->role == 'owner' ? route('owner.dashboard') : route('booking.history') }}"
-               class="bg-gray-100 hover:bg-gray-200 text-gray-600 h-9 w-9 rounded-full flex items-center justify-center transition">
+               class="h-9 w-9 flex items-center justify-center rounded-full bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-red-500 transition border border-gray-200 shadow-sm">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </a>
         </div>
-    </x-slot>
 
-    <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 py-4 h-[calc(100vh-140px)] flex flex-col relative">
-
-        <div id="chatBox" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar rounded-t-2xl shadow-inner border border-gray-200 relative bg-[#e5ddd5]">
-
-            <div class="absolute inset-0 opacity-10 pointer-events-none"
+        <div id="chatBox" class="flex-1 overflow-y-auto p-4 space-y-2 relative scroll-smooth">
+            
+            <div class="absolute inset-0 opacity-40 pointer-events-none"
                  style="background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-repeat: repeat;">
             </div>
 
-            <div id="chatContent" class="relative z-10 space-y-3">
-                <div class="text-center text-gray-500 py-10">
-                    <i class="fa-solid fa-circle-notch fa-spin"></i> Memuat percakapan...
+            <div id="chatContent" class="relative z-10 flex flex-col gap-2 pb-2">
+                <div class="flex flex-col items-center justify-center py-8 text-gray-400 opacity-0 transition-opacity duration-500" id="loadingState">
+                    <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2"></i>
+                    <span class="text-xs">Memuat percakapan...</span>
                 </div>
             </div>
-
         </div>
 
-        <div class="bg-white p-3 rounded-b-2xl shadow-lg border-x border-b border-gray-200 z-20">
-            <div class="flex gap-2 items-end">
-                <textarea id="messageInput" rows="1"
-                    class="flex-1 bg-gray-100 border-0 rounded-2xl px-4 py-3 focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder-gray-500 resize-none custom-scrollbar"
-                    placeholder="Ketik pesan..." style="min-height: 44px; max-height: 120px;"></textarea>
+        <div class="bg-[#f0f2f5] px-2 py-2 md:px-4 md:py-3 shrink-0 z-20 border-t border-gray-300">
+            <div class="max-w-4xl mx-auto flex items-end gap-2">
+                <div class="flex-1 bg-white rounded-2xl flex items-center shadow-sm border border-gray-300 overflow-hidden px-1">
+                    <textarea id="messageInput" rows="1"
+                        class="w-full border-none focus:ring-0 text-sm text-gray-800 placeholder-gray-500 py-3 px-3 resize-none max-h-32"
+                        placeholder="Ketik pesan..." style="min-height: 44px;"></textarea>
+                </div>
 
                 <button onclick="sendMessage()"
-                    class="bg-blue-600 hover:bg-blue-700 text-white w-11 h-11 rounded-full flex items-center justify-center shadow-md transition transform active:scale-90 flex-shrink-0 mb-0.5">
-                    <i class="fa-solid fa-paper-plane text-sm pl-0.5"></i>
+                    class="bg-blue-600 hover:bg-blue-700 text-white w-11 h-11 rounded-full flex items-center justify-center shadow-md transition transform active:scale-95 shrink-0 mb-0.5">
+                    <i class="fa-solid fa-paper-plane text-sm ml-0.5"></i>
                 </button>
             </div>
         </div>
@@ -64,38 +61,58 @@
     </div>
 
     <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        /* Custom Scrollbar */
+        #chatBox::-webkit-scrollbar { width: 4px; }
+        #chatBox::-webkit-scrollbar-track { background: transparent; }
+        #chatBox::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* Bubble Styles */
-        .bubble { max-width: 80%; padding: 8px 12px; position: relative; font-size: 0.95rem; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-
-        /* Bubble Saya (Kanan) */
-        .bubble-me {
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            color: white;
-            border-radius: 16px 16px 0 16px;
-            margin-left: auto;
+        /* Bubble Chat */
+        .bubble {
+            max-width: 85%;
+            padding: 8px 12px;
+            position: relative;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+            word-wrap: break-word;
         }
 
-        /* Bubble Lawan (Kiri) */
+        .bubble-me {
+            background-color: #d9fdd3;
+            color: #111b21;
+            border-radius: 8px 0 8px 8px;
+            margin-left: auto;
+        }
+        
         .bubble-other {
-            background: white;
-            color: #1f2937;
-            border-radius: 16px 16px 16px 0;
+            background-color: #ffffff;
+            color: #111b21;
+            border-radius: 0 8px 8px 8px;
             margin-right: auto;
         }
 
-        .chat-time { font-size: 0.65rem; margin-top: 2px; display: block; text-align: right; opacity: 0.7; }
+        /* Ekor Bubble */
+        .bubble-me::before {
+            content: ""; position: absolute; top: 0; right: -8px; width: 0; height: 0;
+            border-top: 8px solid #d9fdd3; border-right: 8px solid transparent;
+        }
+        .bubble-other::before {
+            content: ""; position: absolute; top: 0; left: -8px; width: 0; height: 0;
+            border-top: 8px solid #ffffff; border-left: 8px solid transparent;
+        }
+
+        .time-stamp {
+            font-size: 0.65rem; color: #667781; float: right; margin-left: 8px; margin-top: 4px;
+        }
     </style>
 
     <script>
         const orderId = {{ $order->id }};
         const currentUserId = {{ Auth::id() }};
-        const chatBox = document.getElementById('chatBox');
         const chatContent = document.getElementById('chatContent');
+        const chatBox = document.getElementById('chatBox');
         const messageInput = document.getElementById('messageInput');
+        const loadingState = document.getElementById('loadingState');
         let isFirstLoad = true;
 
         // Auto Resize Textarea
@@ -104,12 +121,12 @@
             this.style.height = (this.scrollHeight) + 'px';
         });
 
-        // 1. Fungsi Kirim Pesan
+        // Send Message
         function sendMessage() {
             let msg = messageInput.value.trim();
             if(!msg) return;
 
-            // Optimistic UI (Tampil langsung)
+            // UI Optimis
             appendMessage({
                 message: msg,
                 sender_id: currentUserId,
@@ -118,7 +135,8 @@
             scrollToBottom();
 
             messageInput.value = '';
-            messageInput.style.height = '44px'; // Reset tinggi
+            messageInput.style.height = '44px';
+            messageInput.focus();
 
             fetch(`/chat/${orderId}/send`, {
                 method: "POST",
@@ -127,27 +145,28 @@
             }).catch(err => console.error("Gagal kirim", err));
         }
 
-        // 2. Load Pesan
+        // Fetch Messages
         function loadMessages() {
             fetch(`/chat/${orderId}/get`)
                 .then(res => res.json())
                 .then(data => {
-                    chatContent.innerHTML = '';
-
+                    chatContent.innerHTML = ''; // Clear content to prevent duplicate (simple approach)
+                    
                     if(data.length === 0) {
                         chatContent.innerHTML = `
-                            <div class="flex flex-col items-center justify-center h-full pt-10 opacity-60">
-                                <div class="bg-blue-50 p-4 rounded-full mb-2"><i class="fa-regular fa-comments text-3xl text-blue-400"></i></div>
-                                <p class="text-sm text-gray-500 font-medium">Belum ada percakapan.</p>
-                                <p class="text-xs text-gray-400">Mulai chat untuk diskusi.</p>
+                            <div class="flex flex-col items-center justify-center mt-20 opacity-60">
+                                <div class="bg-white p-4 rounded-full mb-3 shadow-sm"><i class="fa-regular fa-comments text-4xl text-blue-300"></i></div>
+                                <p class="text-sm text-gray-500 font-bold bg-white/50 px-3 py-1 rounded-full backdrop-blur-sm">Belum ada pesan</p>
                             </div>`;
                     } else {
-                        // Grouping Tanggal (Opsional, di sini kita render flat dulu)
+                        // Render Date Divider Logic could go here
                         data.forEach(chat => appendMessage(chat));
                     }
 
                     if(isFirstLoad) {
                         scrollToBottom();
+                        loadingState.classList.add('hidden'); // Hide loader
+                        loadingState.classList.remove('opacity-0'); // Reset opacity class
                         isFirstLoad = false;
                     }
                 });
@@ -158,32 +177,37 @@
             let date = new Date(chat.created_at);
             let time = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-            let bubbleHtml = `
-                <div class="flex w-full ${isMe ? 'justify-end' : 'justify-start'} mb-1 animate-fade-in-up">
+            let html = `
+                <div class="flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-fade-in-up">
                     <div class="bubble ${isMe ? 'bubble-me' : 'bubble-other'}">
-                        <p class="whitespace-pre-wrap">${chat.message}</p>
-                        <div class="flex items-center justify-end gap-1 mt-1">
-                            <span class="chat-time ${isMe ? 'text-blue-100' : 'text-gray-400'}">${time}</span>
-                            ${isMe ? '<i class="fa-solid fa-check text-[10px] text-blue-200"></i>' : ''}
+                        ${chat.message}
+                        <div class="time-stamp">
+                            ${time} 
+                            ${isMe ? '<i class="fa-solid fa-check text-blue-500 ml-0.5"></i>' : ''}
                         </div>
                     </div>
                 </div>
             `;
-            chatContent.insertAdjacentHTML('beforeend', bubbleHtml);
+            chatContent.insertAdjacentHTML('beforeend', html);
         }
 
         function scrollToBottom() {
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        setInterval(loadMessages, 3000); // Refresh tiap 3 detik
+        // Polling setiap 3 detik
+        setInterval(loadMessages, 3000);
+        
+        // Initial Load
+        loadingState.classList.remove('opacity-0'); // Show loader initially
         loadMessages();
 
-        messageInput.addEventListener("keypress", function(event) {
-            if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
+        // Enter to Send (Mobile friendly: shift+enter for new line)
+        messageInput.addEventListener("keydown", function(e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
                 sendMessage();
             }
         });
     </script>
-</x-app-layout>
+</x-app-layout> 
