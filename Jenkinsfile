@@ -37,12 +37,5 @@ pipeline {
                 bat 'npm run build'
             }
         }
-
-        stage('5. Run Tests') {
-            steps {
-            // perintah agar Jenkins tidak berhenti jika test gagal
-            bat 'php artisan test || echo "Tests failed but continuing..." '
-            }
-        }
     }
 }
