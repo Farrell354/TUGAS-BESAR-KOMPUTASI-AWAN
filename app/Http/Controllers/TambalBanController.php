@@ -25,15 +25,11 @@ public function index(Request $request): \Illuminate\View\View
         });
     }
 
-    $data = $query->latest()->get();
+    $data = $query->latest()->paginate(10)->withQueryString(); 
 
     $visitors = \App\Models\Visitor::orderBy('visit_date', 'desc')->take(7)->get()->sortBy('visit_date');
-    
-    $chartLabels = $visitors->pluck('visit_date')->map(function ($date) {
-        return \Carbon\Carbon::parse($date)->format('d M');
-    });
+    $chartLabels = $visitors->pluck('visit_date')->map(fn($date) => \Carbon\Carbon::parse($date)->format('d M'));
     $chartData = $visitors->pluck('count');
-
     $users = \App\Models\User::where('role', 'user')->latest()->paginate(5);
 
     return view('admin.dashboard', compact('data', 'chartLabels', 'chartData', 'users'));
@@ -132,13 +128,6 @@ public function index(Request $request): \Illuminate\View\View
         return view('dashboard', compact('lokasi'));
     }
 
-    // =========================================================
-    // BAGIAN 2: KHUSUS UNTUK OWNER (BARU)
-    // =========================================================
-
-    /**
-     * Menampilkan Form Edit KHUSUS Owner (Hanya bengkel miliknya sendiri)
-     */
     public function editOwner()
     {
         // Cari bengkel berdasarkan ID user yang sedang login
@@ -153,9 +142,6 @@ public function index(Request $request): \Illuminate\View\View
         return view('owner.bengkel.edit', compact('bengkel'));
     }
 
-    /**
-     * Simpan Perubahan Data oleh Owner (Termasuk Harga)
-     */
     public function updateOwner(Request $request, $id)
     {
         // Pastikan bengkel yang diedit adalah milik user yang login (Keamanan)
@@ -168,7 +154,6 @@ public function index(Request $request): \Illuminate\View\View
             'deskripsi' => 'nullable|string',
             'jam_buka' => 'nullable',
             'jam_tutup' => 'nullable',
-            'is_open' => 'required|boolean',
             'latitude' => 'required',
             'longitude' => 'required',
 

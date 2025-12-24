@@ -22,9 +22,20 @@
                 </div>
             @endif
 
+            @if ($errors->any())
+                <div class="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-sm">
+                    <strong class="font-bold block mb-1">Gagal Menyimpan:</strong>
+                    <ul class="list-disc list-inside text-sm">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <form action="{{ route('owner.bengkel.update', $bengkel->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                @method('PATCH')
+                @method('PATCH  ') <input type="hidden" name="status" value="{{ $bengkel->status ?? 'buka' }}">
 
                 <div class="bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100">
                     
@@ -65,7 +76,7 @@
                             <textarea name="deskripsi" rows="2" class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 transition shadow-sm" placeholder="Contoh: Sedia ban dalam Swallow, buka 24 jam...">{{ old('deskripsi', $bengkel->deskripsi) }}</textarea>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Jam Buka</label>
                                 <input type="time" name="jam_buka" value="{{ old('jam_buka', $bengkel->jam_buka) }}" class="w-full rounded-lg border-gray-300 text-sm focus:ring-blue-500">
@@ -73,13 +84,6 @@
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Jam Tutup</label>
                                 <input type="time" name="jam_tutup" value="{{ old('jam_tutup', $bengkel->jam_tutup) }}" class="w-full rounded-lg border-gray-300 text-sm focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Status Toko</label>
-                                <select name="is_open" class="w-full rounded-lg border-gray-300 text-sm focus:ring-blue-500">
-                                    <option value="1" {{ $bengkel->is_open ? 'selected' : '' }}>🟢 Buka (Online)</option>
-                                    <option value="0" {{ !$bengkel->is_open ? 'selected' : '' }}>🔴 Tutup (Offline)</option>
-                                </select>
                             </div>
                         </div>
 

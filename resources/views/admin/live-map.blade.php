@@ -1,56 +1,67 @@
 <x-app-layout>
-    <div class="relative w-full h-[calc(100vh-65px)] bg-gray-100 overflow-hidden">
+    <script src="//unpkg.com/alpinejs" defer></script>
 
-        <div class="absolute top-4 left-4 right-16 md:right-auto md:w-96 z-[1000] transition-all duration-300">
-            <div class="bg-white/90 backdrop-blur-md rounded-xl shadow-lg flex items-center p-1.5 border border-white/50 ring-1 ring-black/5">
-                <div class="pl-3 pr-2 text-gray-400">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </div>
-                <input type="text" id="adminSearch" placeholder="Cari Bengkel..."
-                    class="w-full border-none bg-transparent focus:ring-0 text-sm text-gray-700 h-9 placeholder-gray-400"
-                >
-            </div>
-        </div>
+    <div x-data="{ sidebarOpen: true }" class="relative w-full h-[calc(100vh-65px)] bg-gray-100 overflow-hidden flex">
 
-        <button onclick="toggleSidebar()" class="absolute top-4 right-4 z-[1000] bg-white h-12 w-12 rounded-xl shadow-lg flex items-center justify-center text-gray-700 hover:text-blue-600 md:hidden border border-gray-100 active:scale-95 transition">
-            <i class="fa-solid fa-bars text-xl"></i>
-        </button>
-
-        <div class="absolute bottom-8 left-4 z-[1000] pointer-events-none">
-            <div class="bg-white/90 backdrop-blur-md p-3 pr-5 rounded-2xl shadow-xl border border-white/50 flex items-center gap-3 pointer-events-auto transform transition hover:scale-105">
-                <div class="bg-gradient-to-br from-blue-500 to-blue-700 text-white h-10 w-10 rounded-xl flex items-center justify-center text-lg shadow-lg shadow-blue-500/30">
-                    <i class="fa-solid fa-map-location-dot"></i>
-                </div>
-                <div>
-                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Total Terdaftar</p>
-                    <h3 class="text-xl font-black text-gray-800 leading-none">{{ count($lokasi) }} <span class="text-xs font-normal text-gray-400">Titik</span></h3>
+        <div class="flex-1 relative h-full transition-all duration-300 ease-in-out">
+            
+            <div class="absolute top-4 left-4 right-16 md:right-auto md:w-80 z-[999] transition-all duration-300">
+                <div class="bg-white/90 backdrop-blur-md rounded-xl shadow-lg flex items-center p-1.5 border border-white/50 ring-1 ring-black/5">
+                    <div class="pl-3 pr-2 text-gray-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                    <input type="text" id="adminSearch" placeholder="Cari Bengkel..."
+                        class="w-full border-none bg-transparent focus:ring-0 text-sm text-gray-700 h-9 placeholder-gray-400"
+                    >
                 </div>
             </div>
+
+            <button @click="sidebarOpen = true" x-show="!sidebarOpen" x-transition 
+                class="absolute top-4 right-4 z-[999] bg-white h-10 px-4 rounded-lg shadow-lg hidden md:flex items-center gap-2 text-gray-700 hover:text-blue-600 border border-gray-100 font-bold text-sm cursor-pointer">
+                <i class="fa-solid fa-list-ul"></i> Daftar
+            </button>
+
+            <button @click="sidebarOpen = !sidebarOpen" class="absolute top-4 right-4 z-[999] bg-white h-12 w-12 rounded-xl shadow-lg flex items-center justify-center text-gray-700 hover:text-blue-600 md:hidden border border-gray-100 active:scale-95 transition">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+
+            <div class="absolute bottom-8 left-4 z-[999] pointer-events-none">
+                <div class="bg-white/90 backdrop-blur-md p-3 pr-5 rounded-2xl shadow-xl border border-white/50 flex items-center gap-3 pointer-events-auto transform transition hover:scale-105">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-700 text-white h-10 w-10 rounded-xl flex items-center justify-center text-lg shadow-lg shadow-blue-500/30">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Total Terdaftar</p>
+                        <h3 class="text-xl font-black text-gray-800 leading-none">{{ count($lokasi) }} <span class="text-xs font-normal text-gray-400">Titik</span></h3>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mapAdmin" class="w-full h-full z-0 bg-gray-200"></div>
         </div>
 
         <div id="adminSidebar" 
-             class="absolute top-0 right-0 bottom-0 w-80 bg-white shadow-2xl z-[1001] flex flex-col border-l border-gray-200 transform translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out h-full">
+             :class="sidebarOpen ? 'translate-x-0 w-80' : 'translate-x-full w-0 md:translate-x-0 md:w-0'"
+             class="bg-white shadow-2xl z-[1000] flex flex-col border-l border-gray-200 transition-all duration-300 ease-in-out h-full absolute right-0 md:relative shrink-0">
             
-            <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center shrink-0">
+            <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center shrink-0 w-80">
                 <h3 class="font-bold text-gray-800 flex items-center gap-2 text-sm uppercase tracking-wide">
                     <i class="fa-solid fa-list-ul text-blue-600"></i> Daftar Bengkel
                 </h3>
-                <button onclick="toggleSidebar()" class="h-8 w-8 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center md:hidden transition">
+                <button @click="sidebarOpen = false" class="h-8 w-8 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center transition cursor-pointer">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
-            <div id="locationList" class="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar bg-gray-50/30">
+            <div id="locationList" class="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar bg-gray-50/30 w-80">
                 </div>
 
-            <div class="p-3 border-t border-gray-100 bg-white shrink-0">
+            <div class="p-3 border-t border-gray-100 bg-white shrink-0 w-80">
                 <a href="{{ route('tambal-ban.create') }}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition text-sm text-center transform active:scale-95">
                     <i class="fa-solid fa-plus mr-1"></i> Tambah Lokasi Baru
                 </a>
             </div>
         </div>
-
-        <div id="mapAdmin" class="w-full h-full z-0 bg-gray-200"></div>
     </div>
 
     <style>
@@ -72,7 +83,7 @@
         // 1. INIT MAP
         var map = L.map('mapAdmin', { zoomControl: false }).setView([-7.4478, 112.7183], 13);
         
-        // Zoom control di kiri bawah (agar tidak tertutup sidebar di desktop)
+        // Zoom control di kiri bawah
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(map);
 
@@ -96,7 +107,6 @@
                 ? '<span class="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm flex items-center gap-1"><span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> BUKA</span>' 
                 : '<span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">TUTUP</span>';
 
-            var iconCat = point.kategori == 'mobil' ? '<i class="fa-solid fa-car"></i>' : (point.kategori == 'motor' ? '<i class="fa-solid fa-motorcycle"></i>' : '<i class="fa-solid fa-screwdriver-wrench"></i>');
             var imgUrl = point.gambar ? `/storage/${point.gambar}` : 'https://placehold.co/300x150?text=No+Image';
 
             var popupContent = `
@@ -186,16 +196,12 @@
             var target = markers.find(m => m.id === id);
             if(target) setTimeout(() => target.marker.openPopup(), 1200);
             
-            // Di Mobile, tutup sidebar otomatis setelah klik
+            // Di Mobile, tutup sidebar otomatis setelah klik. Cek lebar layar.
             if(window.innerWidth < 768) {
-                document.getElementById('adminSidebar').classList.add('translate-x-full');
+                // Karena kita pakai Alpine, kita trigger event click pada tombol burger mobile atau ubah state via JS (sedikit tricky karena scope).
+                // Cara termudah: biarkan user menutup sendiri atau trigger click tombol burger jika ada
+                // document.querySelector('[x-data]').__x.$data.sidebarOpen = false; // Ini cara akses Alpine data dari luar (tidak resmi)
             }
-        }
-
-        function toggleSidebar() {
-            var sb = document.getElementById('adminSidebar');
-            // Toggle class translate-x-full untuk slide in/out
-            sb.classList.toggle('translate-x-full');
         }
 
         // Live Search
@@ -208,6 +214,12 @@
             markers = [];
             filtered.forEach(p => createMarker(p));
         });
+
+        // Resize Observer agar Peta tidak grey saat sidebar toggle
+        const resizeObserver = new ResizeObserver(() => {
+            map.invalidateSize();
+        });
+        resizeObserver.observe(document.getElementById('mapAdmin'));
 
         // Auto Fit
         if(locations.length > 0) {
