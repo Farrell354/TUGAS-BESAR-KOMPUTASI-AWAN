@@ -9,6 +9,7 @@ use App\Http\Controllers\OwnerController; // Pastikan ini di-import
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\GoogleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -97,5 +98,9 @@ Route::middleware(['auth'])->group(function () {
 // 7. ROUTE REVIEW & MIDTRANS
 Route::post('/review', [ReviewController::class, 'store'])->middleware('auth')->name('review.store');
 Route::post('/midtrans-callback', [CallbackController::class, 'callback']);
+
+// 8. ROUTE LOGIN GOOGLE
+Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('google.login');
+Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
 
 require __DIR__.'/auth.php';
