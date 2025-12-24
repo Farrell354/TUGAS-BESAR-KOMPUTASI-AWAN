@@ -21,8 +21,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Kode ini memaksa semua link (termasuk redirect login) jadi HTTPS
-        if($this->app->environment('production')) {
             URL::forceScheme('https');
-        }
     }
 }
