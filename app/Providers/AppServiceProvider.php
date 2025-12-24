@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,8 +18,10 @@ class AppServiceProvider extends ServiceProvider
      * Bootstrap any application services.
      */
     public function boot(): void
-    {
-        // Kode ini memaksa semua link (termasuk redirect login) jadi HTTPS
-            URL::forceScheme('https');
+{
+    // Paksa HTTPS saat di Azure (Production)
+    if(env('APP_ENV') !== 'local') {
+        \Illuminate\Support\Facades\URL::forceScheme('https');
     }
+}
 }

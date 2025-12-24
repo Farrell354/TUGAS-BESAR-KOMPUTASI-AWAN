@@ -4,21 +4,40 @@ namespace App\Http\Controllers;
 
 use App\Models\TambalBan;
 use App\Models\User;
+use App\Models\Visitor;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Auth; // <--- PENTING: Tambahkan ini
+use Illuminate\Support\Facades\Auth;
 
 class TambalBanController extends Controller
 {
-    // =========================================================
-    // BAGIAN 1: UNTUK ADMIN (JANGAN DIUBAH)
-    // =========================================================
 
-    public function index()
-    {
-        $data = TambalBan::all();
-        return view('admin.dashboard', compact('data'));
+public function index(Request $request): \Illuminate\View\View
+{
+    $query = TambalBan::query();
+
+    if ($request->has('search') && $request->search != null) {
+        $search = $request->search;
+        $query->where(function($q) use ($search) {
+            $q->where('nama_bengkel', 'LIKE', "%{$search}%")
+              ->orWhere('alamat', 'LIKE', "%{$search}%");
+        });
     }
+
+    $data = $query->latest()->get();
+
+    $visitors = \App\Models\Visitor::orderBy('visit_date', 'desc')->take(7)->get()->sortBy('visit_date');
+    
+    $chartLabels = $visitors->pluck('visit_date')->map(function ($date) {
+        return \Carbon\Carbon::parse($date)->format('d M');
+    });
+    $chartData = $visitors->pluck('count');
+
+    $users = \App\Models\User::where('role', 'user')->latest()->paginate(5);
+
+    return view('admin.dashboard', compact('data', 'chartLabels', 'chartData', 'users'));
+}
 
     public function create()
     {
@@ -29,16 +48,16 @@ class TambalBanController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama_bengkel'  => 'required|string|max:255',
+            'nama_bengkel' => 'required|string|max:255',
             'nomer_telepon' => 'required|numeric',
-            'alamat'        => 'nullable|string',
-            'latitude'      => 'required',
-            'longitude'     => 'required',
-            'jam_buka'      => 'required',
-            'jam_tutup'     => 'required',
-            'kategori'      => 'required',
-            'gambar'        => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'user_id'       => 'nullable|exists:users,id',
+            'alamat' => 'nullable|string',
+            'latitude' => 'required',
+            'longitude' => 'required',
+            'jam_buka' => 'required',
+            'jam_tutup' => 'required',
+            'kategori' => 'required',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'user_id' => 'nullable|exists:users,id',
         ]);
 
         $data = $request->all();
@@ -63,16 +82,16 @@ class TambalBanController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'nama_bengkel'  => 'required|string|max:255',
+            'nama_bengkel' => 'required|string|max:255',
             'nomer_telepon' => 'required|numeric',
-            'alamat'        => 'nullable|string',
-            'latitude'      => 'required',
-            'longitude'     => 'required',
-            'jam_buka'      => 'required',
-            'jam_tutup'     => 'required',
-            'kategori'      => 'required',
-            'gambar'        => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'user_id'       => 'nullable|exists:users,id',
+            'alamat' => 'nullable|string',
+            'latitude' => 'required',
+            'longitude' => 'required',
+            'jam_buka' => 'required',
+            'jam_tutup' => 'required',
+            'kategori' => 'required',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'user_id' => 'nullable|exists:users,id',
         ]);
 
         $tambalBan = TambalBan::findOrFail($id);
@@ -143,21 +162,21 @@ class TambalBanController extends Controller
         $bengkel = TambalBan::where('user_id', Auth::id())->findOrFail($id);
 
         $request->validate([
-            'nama_bengkel'  => 'required|string|max:255',
+            'nama_bengkel' => 'required|string|max:255',
             'nomer_telepon' => 'required|numeric',
-            'alamat'        => 'required|string',
-            'deskripsi'     => 'nullable|string',
-            'jam_buka'      => 'nullable',
-            'jam_tutup'     => 'nullable',
-            'is_open'       => 'required|boolean',
-            'latitude'      => 'required',
-            'longitude'     => 'required',
-            
+            'alamat' => 'required|string',
+            'deskripsi' => 'nullable|string',
+            'jam_buka' => 'nullable',
+            'jam_tutup' => 'nullable',
+            'is_open' => 'required|boolean',
+            'latitude' => 'required',
+            'longitude' => 'required',
+
             // Validasi Harga (Wajib ada karena Owner yang atur)
             'harga_motor_dekat' => 'required|numeric|min:0',
-            'harga_motor_jauh'  => 'required|numeric|min:0',
+            'harga_motor_jauh' => 'required|numeric|min:0',
             'harga_mobil_dekat' => 'required|numeric|min:0',
-            'harga_mobil_jauh'  => 'required|numeric|min:0',
+            'harga_mobil_jauh' => 'required|numeric|min:0',
         ]);
 
         $data = $request->all();
