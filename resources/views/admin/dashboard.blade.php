@@ -23,7 +23,7 @@
                 <div class="bg-white p-5 md:p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-500">Total Bengkel</p>
-                        <p class="text-2xl md:text-3xl font-bold text-gray-900 mt-1">{{ $data->count() }}</p>
+                        <p class="text-2xl md:text-3xl font-bold text-gray-900 mt-1">{{ $data->total() }}</p>
                     </div>
                     <div class="h-10 w-10 md:h-12 md:w-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shrink-0">
                         <i class="fa-solid fa-location-dot text-lg md:text-xl"></i>
@@ -102,7 +102,8 @@
                         @endforelse
                     </div>
                     <div class="p-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
-                        {{ $users->links() }} </div>
+                        {{ $users->links() }} 
+                    </div>
                 </div>
             </div>
 
@@ -114,7 +115,7 @@
                             <i class="fa-solid fa-list text-gray-400"></i> Daftar Lokasi
                         </h3>
                         <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-bold border border-blue-200">
-                            {{ $data->count() }} Data
+                            {{ $data->total() }} Data
                         </span>
                     </div>
 
@@ -125,9 +126,8 @@
                         <input type="text" 
                                name="search" 
                                value="{{ request('search') }}"
-                               placeholder="Cari nama atau alamat..." 
+                               placeholder="Cari nama, alamat..." 
                                class="block w-full pl-9 pr-8 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 transition">
-                        
                         @if(request('search'))
                             <a href="{{ url()->current() }}" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer">
                                 <i class="fa-solid fa-xmark"></i>
@@ -137,45 +137,99 @@
                 </div>
 
                 <div class="overflow-x-auto w-full">
-                    <table class="w-full text-left border-collapse min-w-[800px]">
+                    <table class="w-full text-left border-collapse min-w-[900px]">
                         <thead>
                             <tr class="text-xs font-semibold tracking-wide text-gray-500 uppercase border-b bg-gray-50">
-                                <th class="px-4 md:px-6 py-3 w-1/3">Nama Bengkel</th>
-                                <th class="px-4 md:px-6 py-3 w-1/3">Alamat & Kontak</th>
-                                <th class="px-4 md:px-6 py-3">Koordinat</th>
-                                <th class="px-4 md:px-6 py-3 text-center w-24">Aksi</th>
+                                <th class="px-4 md:px-6 py-3 w-[35%]">Info Bengkel</th>
+                                <th class="px-4 md:px-6 py-3 w-[25%]">Operasional</th>
+                                <th class="px-4 md:px-6 py-3 w-[25%]">Lokasi & Kontak</th>
+                                <th class="px-4 md:px-6 py-3 w-[15%] text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">
                             @forelse($data as $item)
                             <tr class="hover:bg-blue-50/30 transition group">
+                                
                                 <td class="px-4 md:px-6 py-4">
-                                    <div class="flex items-center">
-                                        <div class="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-bold mr-3 text-sm shrink-0 border border-blue-100">
-                                            {{ substr($item->nama_bengkel, 0, 1) }}
+                                    <div class="flex items-center gap-4">
+                                        <div class="h-14 w-14 rounded-lg overflow-hidden border border-gray-200 shrink-0 relative bg-gray-100">
+                                            @if($item->gambar)
+                                                <img src="{{ asset('storage/'.$item->gambar) }}" class="w-full h-full object-cover" alt="Foto">
+                                            @else
+                                                <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                                    <i class="fa-solid fa-image text-xl"></i>
+                                                </div>
+                                            @endif
                                         </div>
+                                        
                                         <div>
-                                            <p class="font-bold text-gray-900 text-sm group-hover:text-blue-600 transition">{{ $item->nama_bengkel }}</p>
-                                            <p class="text-[10px] text-gray-400 uppercase tracking-wider font-mono">ID: #{{ $item->id }}</p>
+                                            <p class="font-bold text-gray-900 text-sm group-hover:text-blue-600 transition line-clamp-1">{{ $item->nama_bengkel }}</p>
+                                            
+                                            <div class="flex gap-1 mt-1.5">
+                                                @if($item->kategori == 'mobil')
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                                                        <i class="fa-solid fa-car"></i> Mobil
+                                                    </span>
+                                                @elseif($item->kategori == 'motor')
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
+                                                        <i class="fa-solid fa-motorcycle"></i> Motor
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200">
+                                                        <i class="fa-solid fa-screwdriver-wrench"></i> Umum
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
+
                                 <td class="px-4 md:px-6 py-4">
-                                    <p class="text-sm text-gray-600 truncate max-w-[200px]" title="{{ $item->alamat }}">{{ Str::limit($item->alamat, 40) ?? '-' }}</p>
-                                    <p class="text-xs text-green-600 font-bold mt-1 flex items-center gap-1 bg-green-50 w-fit px-2 py-0.5 rounded border border-green-100">
-                                        <i class="fa-brands fa-whatsapp"></i> {{ $item->nomer_telepon ?? '-' }}
-                                    </p>
-                                </td>
-                                <td class="px-4 md:px-6 py-4">
-                                    <div class="flex flex-col gap-1">
-                                        <span class="bg-gray-100 text-gray-600 text-[10px] font-mono px-2 py-1 rounded border border-gray-200 w-fit">
-                                            Lat: {{ number_format($item->latitude, 5) }}
-                                        </span>
-                                        <span class="bg-gray-100 text-gray-600 text-[10px] font-mono px-2 py-1 rounded border border-gray-200 w-fit">
-                                            Lng: {{ number_format($item->longitude, 5) }}
-                                        </span>
+                                    @php
+                                        $now = date('H:i');
+                                        $buka = substr($item->jam_buka, 0, 5);
+                                        $tutup = substr($item->jam_tutup, 0, 5);
+                                        $isOpen = $buka <= $now && $tutup >= $now;
+                                    @endphp
+
+                                    <div class="flex flex-col items-start gap-1">
+                                        <div class="flex items-center gap-2 text-xs text-gray-600 font-mono bg-gray-100 px-2 py-1 rounded border border-gray-200">
+                                            <i class="fa-regular fa-clock"></i> {{ $buka }} - {{ $tutup }}
+                                        </div>
+
+                                        @if($isOpen)
+                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                                                <span class="relative flex h-2 w-2">
+                                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                  <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                                </span>
+                                                BUKA SEKARANG
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
+                                                <i class="fa-solid fa-store-slash"></i> TUTUP
+                                            </span>
+                                        @endif
                                     </div>
                                 </td>
+
+                                <td class="px-4 md:px-6 py-4">
+                                    <div class="flex flex-col gap-1.5">
+                                        <p class="text-sm text-gray-600 truncate max-w-[220px] flex items-start gap-1.5" title="{{ $item->alamat }}">
+                                            <i class="fa-solid fa-map-pin text-gray-400 mt-0.5 text-xs"></i> 
+                                            <span>{{ Str::limit($item->alamat, 45) ?? '-' }}</span>
+                                        </p>
+                                        
+                                        @if($item->nomer_telepon)
+                                        <a href="https://wa.me/{{ preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $item->nomer_telepon)) }}" target="_blank" class="text-xs text-green-600 font-bold flex items-center gap-1 hover:underline w-fit">
+                                            <i class="fa-brands fa-whatsapp text-lg"></i> {{ $item->nomer_telepon }}
+                                        </a>
+                                        @else
+                                            <span class="text-xs text-gray-400">-</span>
+                                        @endif
+                                    </div>
+                                </td>
+
                                 <td class="px-4 md:px-6 py-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
                                         <a href="{{ route('tambal-ban.edit', $item->id) }}" class="h-8 w-8 rounded-lg flex items-center justify-center bg-yellow-50 text-yellow-600 hover:bg-yellow-500 hover:text-white transition border border-yellow-200 shadow-sm" title="Edit Data">
@@ -208,8 +262,15 @@
                     </table>
                 </div>
                 
-                <div class="px-4 py-3 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 text-center md:text-left">
-                    Menampilkan hasil pencarian.
+                <div class="px-4 py-3 border-t border-gray-200 bg-gray-50 text-xs text-gray-500">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            Menampilkan {{ $data->firstItem() ?? 0 }} sampai {{ $data->lastItem() ?? 0 }} dari {{ $data->total() }} data.
+                        </div>
+                        <div class="mt-2 sm:mt-0">
+                            {{ $data->links() }} 
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -223,7 +284,6 @@
                 new Chart(ctx.getContext('2d'), {
                     type: 'line',
                     data: {
-                        // Menggunakan json_encode manual + null coalescing agar aman
                         labels: {!! json_encode($chartLabels ?? []) !!}, 
                         datasets: [{
                             label: 'Jumlah Pengunjung',
