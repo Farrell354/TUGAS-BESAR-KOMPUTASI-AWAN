@@ -14,22 +14,24 @@
         <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body class="font-sans text-gray-900 antialiased bg-gray-50">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
+        <div class="min-h-screen flex flex-col sm:justify-center items-center py-12 bg-gray-50">
 
-            <div class="mb-6 text-center">
-                <a href="/" class="flex items-center justify-center gap-2 group">
-                    <div class="bg-blue-600 text-white p-2 rounded-lg shadow-md group-hover:bg-blue-700 transition">
-                        <i class="fa-solid fa-map-location-dot text-2xl"></i>
+            <div class="mb-10 text-center">
+                <a href="/" class="flex flex-col items-center justify-center gap-3 group decoration-transparent">
+                    <div class="bg-blue-600 text-white p-3 rounded-xl shadow-lg shadow-blue-200 group-hover:bg-blue-700 group-hover:scale-110 transition-all duration-300">
+                        <i class="fa-solid fa-map-location-dot text-3xl"></i>
                     </div>
-                    <span class="text-2xl font-bold text-gray-800 tracking-tight">Tambal<span class="text-blue-600">Finder</span></span>
+                    <span class="text-3xl font-extrabold text-gray-800 tracking-tight">
+                        Tambal<span class="text-blue-600">Finder</span>
+                    </span>
                 </a>
             </div>
 
-            <div class="w-full sm:max-w-md mt-6 px-8 py-8 bg-white shadow-lg rounded-xl border border-gray-100">
+            <div class="w-full sm:max-w-md px-8 py-8 bg-white shadow-xl rounded-2xl border border-gray-100">
                 {{ $slot }}
             </div>
 
-            <div class="mt-8 text-center text-xs text-gray-400">
+            <div class="mt-8 text-center text-sm text-gray-400">
                 &copy; {{ date('Y') }} TambalFinder. All rights reserved.
             </div>
         </div>
