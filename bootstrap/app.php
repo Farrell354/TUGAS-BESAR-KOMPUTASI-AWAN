@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         
+        $middleware->trustProxies(at: [
+            '*',
+        ]);
         $middleware->alias([
             'isAdmin' => \App\Http\Middleware\IsAdmin::class,
             'isOwner' => \App\Http\Middleware\IsOwner::class,
