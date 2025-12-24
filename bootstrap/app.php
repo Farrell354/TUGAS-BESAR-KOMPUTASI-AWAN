@@ -12,9 +12,14 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         
+        $middleware->web(append: [
+        \App\Http\Middleware\TrackVisitors::class,
+        ]);
+
         $middleware->trustProxies(at: [
             '*',
         ]);
+        
         $middleware->alias([
             'isAdmin' => \App\Http\Middleware\IsAdmin::class,
             'isOwner' => \App\Http\Middleware\IsOwner::class,
