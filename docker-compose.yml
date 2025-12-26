@@ -1,0 +1,61 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_admin
+    ports:
+      - "9010:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+    # 🔴 INI KUNCI UTAMA PERBAIKAN
+    # command: php -S 0.0.0.0:8000 --port=8000
+  db:
+    image: mysql:8.0
+    container_name: mysql_db_admin
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: admin
+    ports:
+      - "33012:3306"
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin_admin
+    restart: always
+    ports:
+      - "8087:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+    depends_on:
+      db:
+        condition: service_healthy
+
+  redis:
+    image: redis:7
+    container_name: redis_server_admin
+    ports:
+      - "6382:6379"
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
