@@ -2,18 +2,22 @@ pipeline {
     agent any
 
     environment {
-        // Konfigurasi ACR Anda
+        // --- KONFIGURASI ACR ---
         REGISTRY_URL = 'tambalfinderr.azurecr.io'
         IMAGE_NAME   = 'tambalfinder'
-
-        // ID ini nanti kita buat di Dashboard Jenkins
+        // Credential ID dari Jenkins untuk Login Docker
         DOCKER_CRED_ID = 'TambalFinderr'
+
+        // --- KONFIGURASI AZURE WEB APP (BARU) ---
+        // Masukkan nama Web App dan Resource Group Azure Anda di sini
+        WEBAPP_NAME    = 'TambalFinder'      
+        RESOURCE_GROUP = 'RG-TambalFinder-2026'
+        SUBSCRIPTION_ID = 'cc1e4621-be06-45d7-b92f-40f5f52a97e4'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Langkah 1: Tarik kode terbaru dari GitHub
                 checkout scm
             }
         }
@@ -22,9 +26,9 @@ pipeline {
             steps {
                 script {
                     echo '--- Building Docker Image ---'
-                    // Build image dengan tag 'latest' dan nomor build (versi)
-                    bat "docker build -t $REGISTRY_URL/$IMAGE_NAME:latestjens ."
-                    bat "docker build -t $REGISTRY_URL/$IMAGE_NAME:${BUILD_NUMBER} ."
+                    // Build dengan tag 'latestjens' dan nomor build
+                    bat "docker build -t %REGISTRY_URL%/%IMAGE_NAME%:latestjens ."
+                    bat "docker build -t %REGISTRY_URL%/%IMAGE_NAME%:%BUILD_NUMBER% ."
                 }
             }
         }
@@ -33,9 +37,8 @@ pipeline {
             steps {
                 script {
                     echo '--- Logging in to Azure Container Registry ---'
-                    // Mengambil username/password aman dari Jenkins Credentials
                     withCredentials([usernamePassword(credentialsId: DOCKER_CRED_ID, usernameVariable: 'ACR_USER', passwordVariable: 'ACR_PASS')]) {
-                        bat "docker login $REGISTRY_URL -u $ACR_USER -p $ACR_PASS"
+                        bat "docker login %REGISTRY_URL% -u %ACR_USER% -p %ACR_PASS%"
                     }
                 }
             }
@@ -45,9 +48,30 @@ pipeline {
             steps {
                 script {
                     echo '--- Pushing Image to ACR ---'
-                    // Push ke Azure
-                    bat "docker push $REGISTRY_URL/$IMAGE_NAME:latestjens"
-                    bat "docker push $REGISTRY_URL/$IMAGE_NAME:${BUILD_NUMBER}"
+                    bat "docker push %REGISTRY_URL%/%IMAGE_NAME%:latestjens"
+                    bat "docker push %REGISTRY_URL%/%IMAGE_NAME%:%BUILD_NUMBER%"
+                }
+            }
+        }
+
+        // --- STAGE BARU: DEPLOY KE AZURE WEB APP ---
+        stage('Deploy to Azure Web App') {
+            steps {
+                script {
+                    echo "Triggering Azure Web App deployment..."
+                    
+                    // Kita menggunakan 'bat' karena agent Anda Windows
+                    // Pastikan Azure CLI (az) sudah terinstall di server Jenkins
+                    
+                    // 1. Set Subscription (Penting jika punya banyak akun)
+                    bat "az account set --subscription %SUBSCRIPTION_ID%"
+
+                    // 2. Update Web App supaya menarik image terbaru (latestjens)
+                    // Kita pakai 'latestjens' agar sesuai dengan yang baru saja di-push
+                    bat "az webapp config container set --name %WEBAPP_NAME% --resource-group %RESOURCE_GROUP% --container-image-name %REGISTRY_URL%/%IMAGE_NAME%:latestjens"
+
+                    // 3. Restart Web App agar perubahan efektif
+                    bat "az webapp restart --name %WEBAPP_NAME% --resource-group %RESOURCE_GROUP%"
                 }
             }
         }
@@ -55,10 +79,10 @@ pipeline {
 
     post {
         always {
-            // Bersihkan sampah image di server Jenkins agar storage tidak penuh
-            bat "docker logout $REGISTRY_URL"
-            bat "docker rmi $REGISTRY_URL/$IMAGE_NAME:latestjens || true"
-            bat "docker rmi $REGISTRY_URL/$IMAGE_NAME:${BUILD_NUMBER} || true"
+            // Bersihkan image lokal untuk hemat space
+            bat "docker logout %REGISTRY_URL%"
+            bat "docker rmi %REGISTRY_URL%/%IMAGE_NAME%:latestjens || exit 0"
+            bat "docker rmi %REGISTRY_URL%/%IMAGE_NAME%:%BUILD_NUMBER% || exit 0"
         }
     }
 }
