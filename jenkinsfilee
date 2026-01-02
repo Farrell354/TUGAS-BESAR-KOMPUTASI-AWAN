@@ -7,7 +7,7 @@ pipeline {
         IMAGE_NAME   = 'tambalfinder'
 
         // ID ini nanti kita buat di Dashboard Jenkins
-        DOCKER_CRED_ID = 'acr-credentials'
+        DOCKER_CRED_ID = 'TambalFinderr'
     }
 
     stages {
