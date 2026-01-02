@@ -19,7 +19,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Copy composer files first
 COPY composer.json composer.lock ./
 
-# IMPORTANT: disable artisan scripts during build
+# IMPORTANT disable artisan scripts during build
 RUN composer install \
     --no-interaction \
     --prefer-dist \
