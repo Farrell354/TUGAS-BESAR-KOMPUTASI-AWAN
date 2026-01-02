@@ -37,6 +37,11 @@ RUN composer install \
 # (TETAP SAMA)
 COPY . .
 
+# 4. BUILD ASSETS (BAGIAN YANG HILANG SEBELUMNYA)
+# Ini akan membuat folder public/build yang berisi CSS/JS
+RUN npm install
+RUN npm run build
+
 # (TETAP SAMA)
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache
