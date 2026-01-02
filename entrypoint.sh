@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # --- BAGIAN 1: PERSIAPAN FOLDER ---
-# Membuat folder storage & cache yang sering hilang saat deploy
 mkdir -p /var/www/html/storage/app/public
 mkdir -p /var/www/html/storage/framework/cache
 mkdir -p /var/www/html/storage/framework/sessions
@@ -10,29 +9,38 @@ mkdir -p /var/www/html/storage/logs
 mkdir -p /var/www/html/bootstrap/cache
 
 # --- BAGIAN 2: PERMISSION ---
-# Memberikan akses tulis ke www-data (User Apache)
-# Ini PENTING agar tidak muncul error "The stream or file could not be opened: failed to open stream: Permission denied"
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# --- BAGIAN 3: PEMBERSIHAN CACHE (WAJIB DI-UNCOMMENT) ---
-# SAYA AKTIFKAN: Ini sangat penting di Azure agar perubahan Environment Variable (APP_URL, Database) terbaca.
+# =================================================================
+# --- [UPDATE] BAGIAN 2.5: SETTING URL BARU ---
+# =================================================================
+# Ini memaksa CSS dan Gambar menggunakan domain baru kamu
+export APP_URL="https://tambalfinderr.azurewebsites.net"
+export ASSET_URL="https://tambalfinderr.azurewebsites.net"
+export APP_ENV=production
+export SCHEME=https
+
+# --- BAGIAN 3: PEMBERSIHAN & CACHING ---
 cd /var/www/html
+
+# Bersihkan cache lama (biar gak nyangkut di URL lama)
 php artisan optimize:clear
 php artisan config:clear
 php artisan view:clear
+php artisan route:clear
+
+# Simpan konfigurasi baru secara permanen
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
 
 # --- BAGIAN 4: SETUP APLIKASI ---
-# Membuat symlink agar gambar bisa diakses publik
 php artisan storage:link
 
-# Migrasi Otomatis (Opsional)
-# Jika Anda ingin migrasi jalan otomatis setiap deploy, hapus tanda pagar (#) di bawah ini:
+# Migrasi otomatis (Hapus tanda pagar jika sudah yakin database aman)
 # php artisan migrate --force
 
 # --- BAGIAN 5: START SERVER ---
-# Menjalankan SSH agar fitur SSH di Azure Portal bisa dipakai
 service ssh start
-
-# Menjalankan Apache di foreground (agar container tidak mati)
 apache2-foreground
