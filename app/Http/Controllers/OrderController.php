@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\TambalBan;
 use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage; // Penting untuk Foto
+use Illuminate\Support\Facades\Storage;
 
 // --- LIBRARY MIDTRANS ---
 use Midtrans\Config;
@@ -109,7 +109,7 @@ class OrderController extends Controller
 
             $params = [
                 'transaction_details' => [
-                    'order_id' => $order->id, // Pastikan ID Order benar
+                    'order_id' => $order->kode_order, // Pastikan ID Order benar
                     'gross_amount' => (int) $order->total_harga,
                 ],
                 'customer_details' => [
@@ -238,15 +238,13 @@ class OrderController extends Controller
     }
 
     // Logika Cek Status Midtrans (Reusable)
-    // Logika Cek Status Midtrans (Reusable)
     private function checkMidtransStatus($order)
     {
         $this->configureMidtrans();
         try {
             // Cek ke server Midtrans
-            $rawStatus = Transaction::status($order->id);
+            $rawStatus = Transaction::status($order->kode_order);
 
-            // --- PERBAIKAN UTAMA DI SINI ---
             // Kita paksa ubah jadi Object agar ($status->transaction_status) bisa jalan
             $status = (object) $rawStatus; 
 
