@@ -13,9 +13,9 @@ chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # =================================================================
-# --- [UPDATE] BAGIAN 2.5: SETTING URL BARU ---
+# --- BAGIAN 2.5: SETTING URL BARU ---
 # =================================================================
-# Ini memaksa CSS dan Gambar menggunakan domain baru kamu
+# Export variabel ini AGAR TERBACA oleh perintah cache di bawah
 export APP_URL="https://tambalfinderr.azurewebsites.net"
 export ASSET_URL="https://tambalfinderr.azurewebsites.net"
 export APP_ENV=production
@@ -24,13 +24,20 @@ export SCHEME=https
 # --- BAGIAN 3: PEMBERSIHAN & CACHING ---
 cd /var/www/html
 
-# Bersihkan cache lama (biar gak nyangkut di URL lama)
-php artisan optimize:clear
+# [UPDATE] Hard Clear Cache (Sesuai Request)
+# Menghapus paksa file cache fisik supaya tidak ada konfigurasi lama yang nyangkut
+echo "Hard clearing cache files..."
+php artisan optimize:clear || true
+rm -f bootstrap/cache/config.php bootstrap/cache/routes-v7.php bootstrap/cache/packages.php bootstrap/cache/services.php || true
+
+# Bersihkan sisa-sisa cache via artisan
 php artisan config:clear
 php artisan view:clear
 php artisan route:clear
 
-# Simpan konfigurasi baru secara permanen
+# [PENTING] Build ulang cache dengan URL baru
+# Karena cache lama sudah dihapus manual di atas, perintah ini akan
+# membuat file cache baru yang sudah berisi URL "tambalfinderr..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
@@ -38,7 +45,7 @@ php artisan view:cache
 # --- BAGIAN 4: SETUP APLIKASI ---
 php artisan storage:link
 
-# Migrasi otomatis (Hapus tanda pagar jika sudah yakin database aman)
+# Migrasi otomatis (Uncomment jika berani otomatis)
 # php artisan migrate --force
 
 # --- BAGIAN 5: START SERVER ---
