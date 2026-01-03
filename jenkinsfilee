@@ -60,24 +60,19 @@ pipeline {
         stage('Deploy to Azure Web App') {
             steps {
                 script {
-                    echo "--- Memulai Deployment ke Web App ---"
+                    echo "--- Memicu Deployment via Webhook ---"
                     
-                    // LANGKAH PENTING:
-                    // Kita tidak pakai 'az account set' lagi supaya tidak error salah ID.
-                    // Jenkins akan otomatis memakai akun dari hasil 'az login' yang kamu lakukan di CMD server.
-
-                    // 1. Beritahu Web App untuk menarik image terbaru dari ACR
-                    bat """
-                        az webapp config container set --name %WEBAPP_NAME% --resource-group %RESOURCE_GROUP% --docker-custom-image-name %REGISTRY_URL%/%IMAGE_NAME%:latestjens --docker-registry-server-url https://%REGISTRY_URL%
-                    """
-
-                    // 2. Restart Web App supaya perubahan langsung terlihat
-                    echo "--- Merestart Web App ---"
-                    bat "az webapp restart --name %WEBAPP_NAME% --resource-group %RESOURCE_GROUP%"
+                    // Ganti URL_WEBHOOK_DARI_AZURE dengan URL panjang yang Anda copy tadi
+                    // Tips: Sebaiknya URL ini disimpan di Jenkins Credentials (Secret Text) agar aman
+                    // Tapi untuk tes, tempel langsung tidak apa-apa.
+                    def webhookUrl = "https://$TambalFinderr:S7x3L1zxHC0suix51Jv96gchABGDqi4HZLsihtgWdbfoi51W0rPPR42Z9M3l@tambalfinderr.scm.azurewebsites.net/api/registry/webhook"
+                    
+                    // Perintah curl untuk 'mencolek' Azure
+                    // Azure akan otomatis pull image 'latestjens' dan restart sendiri
+                    bat "curl -X POST \"${webhookUrl}\""
                 }
             }
         }
-    }
 
     post {
         always {
