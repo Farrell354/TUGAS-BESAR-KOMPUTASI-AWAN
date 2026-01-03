@@ -3,20 +3,18 @@ pipeline {
 
     environment {
         // --- KONFIGURASI ACR ---
-        REGISTRY_URL = 'tambalfinderr.azurecr.io'
-        IMAGE_NAME   = 'tambalfinder'
+        REGISTRY_URL   = 'tambalfinderr.azurecr.io'
+        IMAGE_NAME     = 'tambalfinder'
         // Credential ID dari Jenkins untuk Login Docker
         DOCKER_CRED_ID = 'TambalFinderr'
 
-        // --- KONFIGURASI AZURE WEB APP (BARU) ---
-        // Masukkan nama Web App dan Resource Group Azure Anda di sini
-        WEBAPP_NAME    = 'TambalFinder'      
-        RESOURCE_GROUP = 'RG-TambalFinder-2026'
-        SUBSCRIPTION_ID = 'cc1e4621-be06-45d7-b92f-40f5f52a97e4'
+        // --- KONFIGURASI WEBHOOK (RAHASIA DEPLOYMENT) ---
+        // PENTING: Gunakan tanda kutip SATU ('...') agar tanda $ tidak dianggap variabel oleh Jenkins
+        AZURE_WEBHOOK_URL = 'https://$TambalFinderr:S7x3L1zxHC0suix51Jv96gchABGDqi4HZLsihtgWdbfoi51W0rPPR42Z9M3l@tambalfinderr.scm.azurewebsites.net/api/registry/webhook'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
                 checkout scm
             }
@@ -54,24 +52,17 @@ pipeline {
             }
         }
 
-        // --- STAGE BARU: DEPLOY KE AZURE WEB APP ---
+        // --- STAGE DEPLOY YANG SUDAH DIPERBAIKI (METODE WEBHOOK) ---
         stage('Deploy to Azure Web App') {
             steps {
                 script {
-                    echo "Triggering Azure Web App deployment..."
+                    echo "--- Triggering Deployment via Webhook ---"
+                    echo "Mengirim sinyal ke Azure untuk menarik image terbaru..."
                     
-                    // Kita menggunakan 'bat' karena agent Anda Windows
-                    // Pastikan Azure CLI (az) sudah terinstall di server Jenkins
-                    
-                    // 1. Set Subscription (Penting jika punya banyak akun)
-                    bat "az account set --subscription %SUBSCRIPTION_ID%"
-
-                    // 2. Update Web App supaya menarik image terbaru (latestjens)
-                    // Kita pakai 'latestjens' agar sesuai dengan yang baru saja di-push
-                    bat "az webapp config container set --name %WEBAPP_NAME% --resource-group %RESOURCE_GROUP% --container-image-name %REGISTRY_URL%/%IMAGE_NAME%:latestjens"
-
-                    // 3. Restart Web App agar perubahan efektif
-                    bat "az webapp restart --name %WEBAPP_NAME% --resource-group %RESOURCE_GROUP%"
+                    // Kita menggunakan CURL untuk memanggil URL Webhook
+                    // Ini tidak memerlukan login 'az account' atau instalasi Azure CLI
+                    // Azure akan otomatis Pull Image & Restart setelah menerima sinyal ini
+                    bat "curl -X POST \"${AZURE_WEBHOOK_URL}\""
                 }
             }
         }
@@ -79,7 +70,8 @@ pipeline {
 
     post {
         always {
-            // Bersihkan image lokal untuk hemat space
+            // Bersihkan image lokal untuk hemat space harddisk server
+            echo '--- Cleaning Up ---'
             bat "docker logout %REGISTRY_URL%"
             bat "docker rmi %REGISTRY_URL%/%IMAGE_NAME%:latestjens || exit 0"
             bat "docker rmi %REGISTRY_URL%/%IMAGE_NAME%:%BUILD_NUMBER% || exit 0"
