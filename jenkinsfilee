@@ -2,26 +2,22 @@ pipeline {
     agent any
 
     environment {
-        // --- 1. KONFIGURASI NAMA IMAGE & REGISTRY ---
-        // Pastikan ini sama persis dengan URL Login Server di Access Keys Azure
-        REGISTRY_URL   = 'tambalfinderr.azurecr.io'
-        IMAGE_NAME     = 'tambalfinder'
-        
-        // ID Credential yang kamu buat di Jenkins (harus sama persis huruf besar/kecilnya)
+        // --- KONFIGURASI ACR ---
+        REGISTRY_URL = 'tambalfinderr.azurecr.io'
+        IMAGE_NAME   = 'tambalfinder'
+        // Credential ID dari Jenkins untuk Login Docker
         DOCKER_CRED_ID = 'TambalFinderr'
 
-        // --- 2. KONFIGURASI TARGET DEPLOY ---
-        // Cek di Azure Portal > App Services > Nama Web App kamu
+        // --- KONFIGURASI AZURE WEB APP (BARU) ---
+        // Masukkan nama Web App dan Resource Group Azure Anda di sini
         WEBAPP_NAME    = 'TambalFinder'      
-        
-        // Cek di Azure Portal > Resource groups > Nama RG kamu
         RESOURCE_GROUP = 'RG-TambalFinder-2026'
+        SUBSCRIPTION_ID = 'cc1e4621-be06-45d7-b92f-40f5f52a97e4'
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                // Mengambil kodingan terbaru dari GitHub
                 checkout scm
             }
         }
@@ -29,9 +25,10 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    echo '--- Mulai Membangun Image ---'
-                    // Kita pakai tag 'latestjens' biar konsisten
+                    echo '--- Building Docker Image ---'
+                    // Build dengan tag 'latestjens' dan nomor build
                     bat "docker build -t %REGISTRY_URL%/%IMAGE_NAME%:latestjens ."
+                    bat "docker build -t %REGISTRY_URL%/%IMAGE_NAME%:%BUILD_NUMBER% ."
                 }
             }
         }
@@ -39,8 +36,7 @@ pipeline {
         stage('Login to ACR') {
             steps {
                 script {
-                    echo '--- Login ke Azure Container Registry ---'
-                    // Mengambil username & password dari Jenkins Credentials
+                    echo '--- Logging in to Azure Container Registry ---'
                     withCredentials([usernamePassword(credentialsId: DOCKER_CRED_ID, usernameVariable: 'ACR_USER', passwordVariable: 'ACR_PASS')]) {
                         bat "docker login %REGISTRY_URL% -u %ACR_USER% -p %ACR_PASS%"
                     }
@@ -51,35 +47,42 @@ pipeline {
         stage('Push Image') {
             steps {
                 script {
-                    echo '--- Mengirim Image ke Cloud (ACR) ---'
+                    echo '--- Pushing Image to ACR ---'
                     bat "docker push %REGISTRY_URL%/%IMAGE_NAME%:latestjens"
+                    bat "docker push %REGISTRY_URL%/%IMAGE_NAME%:%BUILD_NUMBER%"
                 }
             }
         }
 
+        // --- STAGE BARU: DEPLOY KE AZURE WEB APP ---
         stage('Deploy to Azure Web App') {
             steps {
                 script {
-                    echo "--- Memicu Deployment via Webhook ---"
+                    echo "Triggering Azure Web App deployment..."
                     
-                    // Ganti URL_WEBHOOK_DARI_AZURE dengan URL panjang yang Anda copy tadi
-                    // Tips: Sebaiknya URL ini disimpan di Jenkins Credentials (Secret Text) agar aman
-                    // Tapi untuk tes, tempel langsung tidak apa-apa.
-                    def webhookUrl = "https://$TambalFinderr:S7x3L1zxHC0suix51Jv96gchABGDqi4HZLsihtgWdbfoi51W0rPPR42Z9M3l@tambalfinderr.scm.azurewebsites.net/api/registry/webhook"
+                    // Kita menggunakan 'bat' karena agent Anda Windows
+                    // Pastikan Azure CLI (az) sudah terinstall di server Jenkins
                     
-                    // Perintah curl untuk 'mencolek' Azure
-                    // Azure akan otomatis pull image 'latestjens' dan restart sendiri
-                    bat "curl -X POST \"${webhookUrl}\""
+                    // 1. Set Subscription (Penting jika punya banyak akun)
+                    bat "az account set --subscription %SUBSCRIPTION_ID%"
+
+                    // 2. Update Web App supaya menarik image terbaru (latestjens)
+                    // Kita pakai 'latestjens' agar sesuai dengan yang baru saja di-push
+                    bat "az webapp config container set --name %WEBAPP_NAME% --resource-group %RESOURCE_GROUP% --container-image-name %REGISTRY_URL%/%IMAGE_NAME%:latestjens"
+
+                    // 3. Restart Web App agar perubahan efektif
+                    bat "az webapp restart --name %WEBAPP_NAME% --resource-group %RESOURCE_GROUP%"
                 }
             }
         }
+    }
 
     post {
         always {
-            echo '--- Membersihkan Sisa Build ---'
-            // Logout dan hapus image di laptop agar harddisk tidak penuh
+            // Bersihkan image lokal untuk hemat space
             bat "docker logout %REGISTRY_URL%"
             bat "docker rmi %REGISTRY_URL%/%IMAGE_NAME%:latestjens || exit 0"
+            bat "docker rmi %REGISTRY_URL%/%IMAGE_NAME%:%BUILD_NUMBER% || exit 0"
         }
     }
 }
